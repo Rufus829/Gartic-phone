@@ -2,2807 +2,538 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎨 Gartic Phone Pro - Multiplayer Edition</title>
-    
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    
-    <!-- PeerJS for P2P multiplayer -->
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    
-    <!-- Confetti for celebrations -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gartic Phone - Fungerande Version</title>
     <style>
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --primary-light: #818cf8;
-            --secondary: #ec4899;
-            --secondary-light: #f472b6;
-            --accent: #f59e0b;
-            --accent-light: #fbbf24;
-            --success: #10b981;
-            --success-light: #34d399;
-            --danger: #ef4444;
-            --danger-light: #f87171;
-            --dark: #0f172a;
-            --dark-light: #1e293b;
-            --light: #f8fafc;
-            --gray: #64748b;
-            --gray-light: #94a3b8;
-            --white: #ffffff;
-            
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-            --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
-            
-            --radius-sm: 0.375rem;
-            --radius: 0.5rem;
-            --radius-md: 0.75rem;
-            --radius-lg: 1rem;
-            --radius-xl: 1.5rem;
-            --radius-2xl: 2rem;
-            --radius-full: 9999px;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        html {
-            font-size: 16px;
-            scroll-behavior: smooth;
-        }
-
-        body {
-            font-family: 'Nunito', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
-            background-size: 400% 400%;
-            animation: gradientShift 15s ease infinite;
-            min-height: 100vh;
-            overflow-x: hidden;
-            color: var(--dark);
-            line-height: 1.6;
-        }
-
-        @keyframes gradientShift {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Screen Management */
-        .screen {
-            display: none;
-            min-height: 100vh;
-            padding: 20px;
-            position: relative;
-        }
-
-        .screen.active {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            animation: screenEnter 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes screenEnter {
-            from {
-                opacity: 0;
-                transform: scale(0.9) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        /* Glassmorphism Card */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            border-radius: var(--radius-2xl);
-            box-shadow: var(--shadow-2xl);
-            padding: 2rem;
-            max-width: 900px;
-            width: 100%;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent), var(--success));
-            background-size: 300% 100%;
-            animation: shimmer 3s linear infinite;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 300% 50%; }
-        }
-
-        /* Typography */
-        h1, h2, h3, h4 {
-            font-family: 'Fredoka One', cursive;
-            font-weight: 400;
-            line-height: 1.2;
-        }
-
-        .title-xl {
-            font-size: clamp(2.5rem, 8vw, 4rem);
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-align: center;
-            margin-bottom: 0.5rem;
-            text-shadow: none;
-            filter: drop-shadow(0 4px 6px rgba(99, 102, 241, 0.3));
-        }
-
-        .title-lg {
-            font-size: clamp(1.5rem, 5vw, 2.5rem);
-            color: var(--dark);
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-
-        .title-md {
-            font-size: clamp(1.2rem, 4vw, 1.8rem);
-            color: var(--dark);
-            margin-bottom: 0.75rem;
-        }
-
-        .text-gradient {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            padding: 1rem 2rem;
-            font-family: 'Nunito', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            border: none;
-            border-radius: var(--radius-full);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-            overflow: hidden;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
-            transition: left 0.5s;
-        }
-
-        .btn:hover::before {
-            left: 100%;
-        }
-
-        .btn:active {
-            transform: scale(0.95);
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, var(--secondary) 0%, #db2777 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
-        }
-
-        .btn-secondary:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(236, 72, 153, 0.5);
-        }
-
-        .btn-accent {
-            background: linear-gradient(135deg, var(--accent) 0%, #d97706 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
-        }
-
-        .btn-accent:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.5);
-        }
-
-        .btn-success {
-            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: var(--dark);
-            border: 3px solid var(--gray-light);
-        }
-
-        .btn-outline:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-            background: rgba(99, 102, 241, 0.1);
-        }
-
-        .btn-lg {
-            padding: 1.25rem 3rem;
-            font-size: 1.25rem;
-        }
-
-        .btn-sm {
-            padding: 0.75rem 1.5rem;
-            font-size: 0.9rem;
-        }
-
-        /* Input Fields */
-        .input-group {
-            position: relative;
-            margin-bottom: 1.5rem;
-        }
-
-        .input-field {
-            width: 100%;
-            padding: 1rem 1.25rem;
-            font-family: 'Nunito', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 600;
-            border: 3px solid #e2e8f0;
-            border-radius: var(--radius-xl);
-            background: white;
-            transition: all 0.3s;
-            outline: none;
-        }
-
-        .input-field:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-        }
-
-        .input-field::placeholder {
-            color: var(--gray-light);
-            font-weight: 500;
-        }
-
-        .input-label {
-            position: absolute;
-            left: 1.25rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: white;
-            padding: 0 0.5rem;
-            color: var(--gray);
-            font-weight: 600;
-            transition: all 0.3s;
-            pointer-events: none;
-        }
-
-        .input-field:focus + .input-label,
-        .input-field:not(:placeholder-shown) + .input-label {
-            top: 0;
-            font-size: 0.85rem;
-            color: var(--primary);
-        }
-
-        /* Avatar Selector */
-        .avatar-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin: 1.5rem 0;
-        }
-
-        .avatar-option {
-            aspect-ratio: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2.5rem;
-            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-            border: 3px solid transparent;
-            border-radius: var(--radius-lg);
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .avatar-option::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .avatar-option:hover {
-            transform: scale(1.1) rotate(5deg);
-            border-color: var(--primary-light);
-        }
-
-        .avatar-option.selected {
-            border-color: var(--primary);
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-            transform: scale(1.05);
-        }
-
-        .avatar-option.selected::after {
-            content: '✓';
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            width: 24px;
-            height: 24px;
-            background: var(--success);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            font-weight: 900;
-        }
-
-        .avatar-option span {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Room Code Display */
-        .room-code-container {
-            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
-            border-radius: var(--radius-xl);
-            padding: 2rem;
-            text-align: center;
-            margin: 1.5rem 0;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .room-code-container::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-
-        .room-code-label {
-            color: var(--gray-light);
-            font-size: 0.9rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 0.5rem;
-        }
-
-        .room-code {
-            font-family: 'Fredoka One', cursive;
-            font-size: 3rem;
-            color: white;
-            letter-spacing: 8px;
-            text-shadow: 0 0 20px rgba(255,255,255,0.3);
-            position: relative;
-            z-index: 1;
-        }
-
-        .copy-btn {
-            position: absolute;
-            right: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .copy-btn:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        /* Player List */
-        .players-section {
-            margin: 1.5rem 0;
-        }
-
-        .players-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .player-card {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border-radius: var(--radius-lg);
-            padding: 1.25rem;
-            text-align: center;
-            position: relative;
-            transition: all 0.3s;
-            border: 2px solid transparent;
-        }
-
-        .player-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--primary-light);
-        }
-
-        .player-avatar-large {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 0.75rem;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-        }
-
-        .player-name {
-            font-weight: 800;
-            color: var(--dark);
-            font-size: 1rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .player-status {
-            font-size: 0.75rem;
-            color: var(--gray);
-            margin-top: 0.25rem;
-            font-weight: 600;
-        }
-
-        .host-crown {
-            position: absolute;
-            top: -10px;
-            right: -10px;
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(135deg, var(--accent) 0%, #d97706 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1rem;
-            box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
-            animation: bounce 2s infinite;
-        }
-
-        .you-badge {
-            position: absolute;
-            top: -8px;
-            left: -8px;
-            background: var(--success);
-            color: white;
-            font-size: 0.65rem;
-            font-weight: 800;
-            padding: 0.25rem 0.5rem;
-            border-radius: var(--radius-full);
-            text-transform: uppercase;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-
-        /* Settings Panel */
-        .settings-panel {
-            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-            border-radius: var(--radius-xl);
-            padding: 1.5rem;
-            margin: 1.5rem 0;
-            border: 2px solid #e2e8f0;
-        }
-
-        .setting-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 0;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .setting-row:last-child {
-            border-bottom: none;
-        }
-
-        .setting-info h4 {
-            font-size: 1rem;
-            color: var(--dark);
-            margin-bottom: 0.25rem;
-        }
-
-        .setting-info p {
-            font-size: 0.85rem;
-            color: var(--gray);
-        }
-
-        .setting-control {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .number-input {
-            width: 80px;
-            padding: 0.75rem;
-            font-size: 1.1rem;
-            font-weight: 700;
-            text-align: center;
-            border: 2px solid #e2e8f0;
-            border-radius: var(--radius-lg);
-            outline: none;
-            transition: all 0.3s;
-        }
-
-        .number-input:focus {
-            border-color: var(--primary);
-        }
-
-        /* Canvas & Drawing */
-        .drawing-container {
-            background: white;
-            border-radius: var(--radius-2xl);
-            padding: 1.5rem;
-            box-shadow: var(--shadow-2xl);
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        .drawing-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .prompt-display {
-            flex: 1;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius-xl);
-            font-size: 1.25rem;
-            font-weight: 700;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .prompt-display::before {
-            content: '"';
-            position: absolute;
-            left: 10px;
-            top: -10px;
-            font-size: 4rem;
-            opacity: 0.2;
-            font-family: serif;
-        }
-
-        .timer-display {
-            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius-xl);
-            font-family: 'Fredoka One', cursive;
-            font-size: 2rem;
-            min-width: 100px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
-            position: relative;
-        }
-
-        .timer-display.warning {
-            animation: pulse 1s infinite;
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-        }
-
-        .timer-display::after {
-            content: 's';
-            font-size: 1rem;
-            position: absolute;
-            bottom: 5px;
-            right: 10px;
-            opacity: 0.8;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .canvas-wrapper {
-            position: relative;
-            background: #f8fafc;
-            border-radius: var(--radius-xl);
-            overflow: hidden;
-            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 1rem;
-        }
-
-        #drawingCanvas {
-            display: block;
-            cursor: crosshair;
-            touch-action: none;
-            background: white;
-        }
-
-        .canvas-placeholder {
-            position: absolute;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--gray-light);
-            font-size: 1.2rem;
-            font-weight: 600;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .canvas-placeholder.visible {
-            opacity: 1;
-        }
-
-        /* Toolbar */
-        .toolbar {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-items: center;
-            padding: 1rem;
-            background: #f8fafc;
-            border-radius: var(--radius-xl);
-        }
-
-        .tool-section {
-            display: flex;
-            gap: 0.5rem;
-            padding: 0.5rem;
-            background: white;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .tool-btn {
-            width: 50px;
-            height: 50px;
-            border: none;
-            border-radius: var(--radius-md);
-            background: white;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .tool-btn:hover {
-            background: #f1f5f9;
-            transform: scale(1.1);
-        }
-
-        .tool-btn.active {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-        }
-
-        .color-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            border: 3px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s;
-            position: relative;
-        }
-
-        .color-btn:hover {
-            transform: scale(1.2);
-        }
-
-        .color-btn.active {
-            border-color: var(--dark);
-            transform: scale(1.15);
-            box-shadow: 0 0 0 3px white, 0 0 0 5px var(--primary);
-        }
-
-        .size-btn {
-            border-radius: 50%;
-            background: var(--dark);
-            border: 3px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .size-btn.active {
-            border-color: var(--primary);
-            background: var(--primary);
-        }
-
-        /* Writing Screen */
-        .writing-container {
-            text-align: center;
-            max-width: 800px;
-        }
-
-        .drawing-preview {
-            background: white;
-            border-radius: var(--radius-xl);
-            padding: 2rem;
-            margin: 1.5rem 0;
-            box-shadow: var(--shadow-xl);
-            position: relative;
-        }
-
-        .drawing-preview img {
-            max-width: 100%;
-            max-height: 400px;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
-        }
-
-        .guess-form {
-            margin-top: 1.5rem;
-        }
-
-        .guess-input-large {
-            width: 100%;
-            max-width: 600px;
-            padding: 1.5rem 2rem;
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-align: center;
-            border: 4px solid #e2e8f0;
-            border-radius: var(--radius-xl);
-            outline: none;
-            transition: all 0.3s;
-            font-family: 'Nunito', sans-serif;
-        }
-
-        .guess-input-large:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 6px rgba(99, 102, 241, 0.1);
-        }
-
-        /* Results */
-        .results-container {
-            max-width: 1000px;
-            width: 100%;
-        }
-
-        .chain-card {
-            background: white;
-            border-radius: var(--radius-2xl);
-            margin-bottom: 2rem;
-            overflow: hidden;
-            box-shadow: var(--shadow-xl);
-            animation: slideUp 0.5s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .chain-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            padding: 1rem 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .chain-header-avatar {
-            width: 50px;
-            height: 50px;
-            background: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.75rem;
-        }
-
-        .chain-header-info h3 {
-            font-size: 1.25rem;
-            margin: 0;
-        }
-
-        .chain-header-info p {
-            opacity: 0.9;
-            font-size: 0.9rem;
-            margin: 0;
-        }
-
-        .chain-items {
-            padding: 1.5rem;
-        }
-
-        .chain-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: #f8fafc;
-            border-radius: var(--radius-lg);
-            transition: all 0.3s;
-        }
-
-        .chain-item:hover {
-            background: #f1f5f9;
-            transform: translateX(5px);
-        }
-
-        .chain-icon {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
-        }
-
-        .chain-content {
-            flex: 1;
-        }
-
-        .chain-text {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--dark);
-        }
-
-        .chain-author {
-            font-size: 0.85rem;
-            color: var(--gray);
-            margin-top: 0.25rem;
-        }
-
-        .chain-drawing {
-            max-width: 300px;
-            max-height: 200px;
-            border-radius: var(--radius-md);
-            box-shadow: var(--shadow-md);
-        }
-
-        .chain-arrow {
-            text-align: center;
-            color: var(--primary);
-            font-size: 1.5rem;
-            margin: 0.5rem 0;
-        }
-
-        /* Waiting Screen */
-        .waiting-container {
-            text-align: center;
-        }
-
-        .waiting-animation {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 2rem;
-            position: relative;
-        }
-
-        .spinner {
-            position: absolute;
-            inset: 0;
-            border: 6px solid #e2e8f0;
-            border-top-color: var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        .spinner-inner {
-            position: absolute;
-            inset: 15px;
-            border: 4px solid #e2e8f0;
-            border-bottom-color: var(--secondary);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite reverse;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .progress-container {
-            max-width: 400px;
-            margin: 1.5rem auto;
-        }
-
-        .progress-bar-large {
-            height: 12px;
-            background: #e2e8f0;
-            border-radius: var(--radius-full);
-            overflow: hidden;
-            position: relative;
-        }
-
-        .progress-fill-large {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 50%, var(--accent) 100%);
-            background-size: 200% 100%;
-            animation: progressShine 2s linear infinite;
-            transition: width 0.5s ease;
-            border-radius: var(--radius-full);
-        }
-
-        @keyframes progressShine {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .waiting-players {
-            display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-top: 1.5rem;
-            flex-wrap: wrap;
-        }
-
-        .waiting-player {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            background: white;
-            border-radius: var(--radius-full);
-            font-size: 0.9rem;
-            font-weight: 600;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .waiting-player.ready {
-            background: linear-gradient(135deg, var(--success-light) 0%, var(--success) 100%);
-            color: white;
-        }
-
-        .status-dot {
-            width: 10px;
-            height: 10px;
-            background: var(--gray-light);
-            border-radius: 50%;
-        }
-
-        .waiting-player.ready .status-dot {
-            background: white;
-            animation: pulse 1s infinite;
-        }
-
-        /* Round Indicator */
-        .rounds-track {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin: 1rem 0;
-        }
-
-        .round-node {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 0.9rem;
-            position: relative;
-            transition: all 0.3s;
-        }
-
-        .round-node::before {
-            content: '';
-            position: absolute;
-            left: -50%;
-            width: 100%;
-            height: 4px;
-            background: #e2e8f0;
-            z-index: -1;
-        }
-
-        .round-node:first-child::before {
-            display: none;
-        }
-
-        .round-node.pending {
-            background: #e2e8f0;
-            color: var(--gray);
-        }
-
-        .round-node.active {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
-            animation: glow 2s infinite;
-        }
-
-        @keyframes glow {
-            0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); }
-            50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.8); }
-        }
-
-        .round-node.completed {
-            background: var(--success);
-            color: white;
-        }
-
-        /* Connection Status */
-        .connection-status {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 0.75rem 1.25rem;
-            border-radius: var(--radius-full);
-            font-size: 0.85rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            z-index: 1000;
-            transition: all 0.3s;
-            box-shadow: var(--shadow-lg);
-        }
-
-        .connection-status.connected {
-            background: linear-gradient(135deg, var(--success-light) 0%, var(--success) 100%);
-            color: white;
-        }
-
-        .connection-status.connecting {
-            background: linear-gradient(135deg, var(--accent-light) 0%, var(--accent) 100%);
-            color: white;
-            animation: pulse 2s infinite;
-        }
-
-        .connection-status.error {
-            background: linear-gradient(135deg, var(--danger-light) 0%, var(--danger) 100%);
-            color: white;
-        }
-
-        /* Toast Notifications */
-        .toast-container {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1001;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            pointer-events: none;
-        }
-
-        .toast {
-            padding: 1rem 1.5rem;
-            border-radius: var(--radius-xl);
-            color: white;
-            font-weight: 600;
-            box-shadow: var(--shadow-xl);
-            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s;
-            pointer-events: auto;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        @keyframes toastIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        @keyframes toastOut {
-            to {
-                opacity: 0;
-                transform: translateY(-20px) scale(0.9);
-            }
-        }
-
-        .toast.success { background: linear-gradient(135deg, var(--success-light) 0%, var(--success) 100%); }
-        .toast.error { background: linear-gradient(135deg, var(--danger-light) 0%, var(--danger) 100%); }
-        .toast.info { background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%); }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(8px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-            padding: 20px;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: var(--radius-2xl);
-            padding: 2.5rem;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-            position: relative;
-        }
-
-        @keyframes modalPop {
-            from {
-                opacity: 0;
-                transform: scale(0.8) translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 1rem;
-            right: 1rem;
-            width: 40px;
-            height: 40px;
-            border: none;
-            background: #f1f5f9;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .modal-close:hover {
-            background: #e2e8f0;
-            transform: rotate(90deg);
-        }
-
-        /* Instructions */
-        .instruction-card {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-            border: 2px solid rgba(99, 102, 241, 0.2);
-            border-radius: var(--radius-xl);
-            padding: 1.5rem;
-            margin: 1rem 0;
-            text-align: left;
-        }
-
-        .instruction-step {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 1rem;
-            align-items: flex-start;
-        }
-
-        .instruction-step:last-child {
-            margin-bottom: 0;
-        }
-
-        .step-number {
-            width: 32px;
-            height: 32px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-            color: white;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            flex-shrink: 0;
-        }
-
-        .step-content h4 {
-            font-size: 1rem;
-            margin-bottom: 0.25rem;
-            color: var(--dark);
-        }
-
-        .step-content p {
-            font-size: 0.9rem;
-            color: var(--gray);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .glass-card {
-                padding: 1.5rem;
-                margin: 10px;
-            }
-
-            .avatar-grid {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 0.75rem;
-            }
-
-            .avatar-option {
-                font-size: 2rem;
-            }
-
-            .players-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .drawing-header {
-                flex-direction: column;
-            }
-
-            .toolbar {
-                gap: 0.5rem;
-            }
-
-            .tool-btn {
-                width: 44px;
-                height: 44px;
-                font-size: 1.25rem;
-            }
-
-            .room-code {
-                font-size: 2rem;
-                letter-spacing: 4px;
-            }
-
-            .chain-item {
-                flex-direction: column;
-                text-align: center;
-            }
-
-            .chain-arrow {
-                transform: rotate(90deg);
-            }
-        }
-
-        /* Utility Classes */
-        .text-center { text-align: center; }
-        .mb-1 { margin-bottom: 0.5rem; }
-        .mb-2 { margin-bottom: 1rem; }
-        .mb-3 { margin-bottom: 1.5rem; }
-        .mb-4 { margin-bottom: 2rem; }
-        .mt-1 { margin-top: 0.5rem; }
-        .mt-2 { margin-top: 1rem; }
-        .mt-3 { margin-top: 1.5rem; }
-        .flex { display: flex; }
-        .flex-col { flex-direction: column; }
-        .items-center { align-items: center; }
-        .justify-center { justify-content: center; }
-        .gap-2 { gap: 1rem; }
-        .w-full { width: 100%; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
         .hidden { display: none !important; }
-
-        /* Animations */
-        .float {
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .shake {
-            animation: shake 0.5s ease-in-out;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-10px); }
-            75% { transform: translateX(10px); }
-        }
-
-        /* Loading Dots */
-        .loading-dots {
-            display: inline-flex;
-            gap: 4px;
-        }
-
-        .loading-dots span {
-            width: 8px;
-            height: 8px;
-            background: currentColor;
-            border-radius: 50%;
-            animation: loadingDot 1.4s ease-in-out infinite;
-        }
-
-        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes loadingDot {
-            0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
-            40% { transform: scale(1); opacity: 1; }
-        }
+        
+        /* Screens */
+        .screen { display: none; background: white; border-radius: 20px; padding: 30px; max-width: 800px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .screen.active { display: block; }
+        
+        /* Typography */
+        h1 { color: #667eea; text-align: center; margin-bottom: 20px; font-size: 2.5rem; }
+        h2 { color: #333; margin-bottom: 15px; }
+        
+        /* Inputs */
+        input { width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; }
+        input:focus { border-color: #667eea; outline: none; }
+        
+        /* Buttons */
+        button { width: 100%; padding: 15px; font-size: 1.1rem; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 10px; transition: all 0.3s; }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover { background: #5568d3; transform: translateY(-2px); }
+        .btn-secondary { background: #ec4899; color: white; }
+        .btn-secondary:hover { background: #db2777; }
+        .btn-success { background: #10b981; color: white; }
+        
+        /* Room Code */
+        .room-code-box { background: #1e1b4b; color: white; padding: 20px; border-radius: 15px; text-align: center; margin: 20px 0; }
+        .room-code { font-size: 2.5rem; font-weight: bold; letter-spacing: 5px; margin: 10px 0; }
+        
+        /* Players */
+        .players-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 20px 0; }
+        .player-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 10px; text-align: center; }
+        .player-avatar { font-size: 2rem; margin-bottom: 5px; }
+        
+        /* Canvas */
+        .canvas-container { background: #f5f5f5; border-radius: 10px; margin: 15px 0; position: relative; }
+        canvas { display: block; border-radius: 10px; cursor: crosshair; touch-action: none; }
+        
+        /* Tools */
+        .tools { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 15px 0; }
+        .tool-btn { width: 50px; height: 50px; border: 2px solid #ddd; background: white; border-radius: 10px; cursor: pointer; font-size: 1.2rem; }
+        .tool-btn.active { border-color: #667eea; background: #667eea; color: white; }
+        .color-btn { width: 35px; height: 35px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; }
+        .color-btn.active { border-color: #333; }
+        
+        /* Timer */
+        .timer { background: #ef4444; color: white; padding: 10px 20px; border-radius: 10px; font-size: 1.5rem; font-weight: bold; display: inline-block; margin-bottom: 15px; }
+        .timer.warning { animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+        
+        /* Results */
+        .chain-item { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 10px; }
+        .chain-drawing { max-width: 100%; border-radius: 10px; margin-top: 10px; }
+        
+        /* Status */
+        .status { position: fixed; top: 20px; right: 20px; padding: 10px 20px; border-radius: 20px; color: white; font-weight: bold; }
+        .status.online { background: #10b981; }
+        .status.offline { background: #ef4444; }
     </style>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
-    <!-- Connection Status -->
-    <div id="connectionStatus" class="connection-status connecting">
-        <span class="loading-dots"><span></span><span></span><span></span></span>
-        <span id="connectionText">Ansluter...</span>
-    </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <!-- Status -->
+    <div id="status" class="status offline">Offline</div>
 
     <!-- Setup Screen -->
-    <div class="screen active" id="setupScreen">
-        <div class="glass-card" style="max-width: 500px;">
-            <h1 class="title-xl mb-2">🎨 Gartic Phone</h1>
-            <p class="text-center mb-4" style="color: var(--gray); font-size: 1.1rem;">Telefonlådan för kreativa själar!</p>
-            
-            <div class="input-group">
-                <input type="text" class="input-field" id="playerNameInput" placeholder=" " maxlength="12" value="">
-                <label class="input-label">Ditt smeknamn</label>
-            </div>
-
-            <h3 class="title-md text-center mb-2">Välj avatar</h3>
-            <div class="avatar-grid" id="avatarGrid">
-                <div class="avatar-option selected" data-avatar="🎨"><span>🎨</span></div>
-                <div class="avatar-option" data-avatar="🎭"><span>🎭</span></div>
-                <div class="avatar-option" data-avatar="🎪"><span>🎪</span></div>
-                <div class="avatar-option" data-avatar="🎯"><span>🎯</span></div>
-                <div class="avatar-option" data-avatar="🎲"><span>🎲</span></div>
-                <div class="avatar-option" data-avatar="🎸"><span>🎸</span></div>
-                <div class="avatar-option" data-avatar="🌟"><span>🌟</span></div>
-                <div class="avatar-option" data-avatar="🔥"><span>🔥</span></div>
-                <div class="avatar-option" data-avatar="🚀"><span>🚀</span></div>
-                <div class="avatar-option" data-avatar="🎉"><span>🎉</span></div>
-                <div class="avatar-option" data-avatar="🎁"><span>🎁</span></div>
-                <div class="avatar-option" data-avatar="🎀"><span>🎀</span></div>
-            </div>
-
-            <div class="instruction-card mt-3">
-                <div class="instruction-step">
-                    <div class="step-number">1</div>
-                    <div class="step-content">
-                        <h4>Skapa eller gå med</h4>
-                        <p>Starta ett nytt rum eller anslut till en vän med en kod</p>
-                    </div>
-                </div>
-                <div class="instruction-step">
-                    <div class="step-number">2</div>
-                    <div class="step-content">
-                        <h4>Skriv & Rita</h4>
-                        <p>Beskriv konstiga meningar och rita vad du ser</p>
-                    </div>
-                </div>
-                <div class="instruction-step">
-                    <div class="step-number">3</div>
-                    <div class="step-content">
-                        <h4>Skratta tillsammans</h4>
-                        <p>Se hur meningarna förvrängs genom hela kedjan!</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex flex-col gap-2 mt-3">
-                <button class="btn btn-primary btn-lg" onclick="createRoom()">
-                    <span>🏠</span> Skapa Nytt Rum
-                </button>
-                <button class="btn btn-secondary btn-lg" onclick="showJoinScreen()">
-                    <span>🔑</span> Gå Med i Rum
-                </button>
-            </div>
-        </div>
+    <div id="setupScreen" class="screen active">
+        <h1>🎨 Gartic Phone</h1>
+        <input type="text" id="playerName" placeholder="Ditt namn" maxlength="12">
+        <button class="btn-primary" onclick="createRoom()">Skapa Rum</button>
+        <button class="btn-secondary" onclick="showJoin()">Gå Med i Rum</button>
     </div>
 
     <!-- Join Screen -->
-    <div class="screen" id="joinScreen">
-        <div class="glass-card" style="max-width: 450px;">
-            <button class="modal-close" onclick="showScreen('setupScreen')">×</button>
-            <h2 class="title-lg mb-3">Gå Med i Rum</h2>
-            
-            <div class="input-group">
-                <input type="text" class="input-field" id="joinCodeInput" placeholder=" " maxlength="6" style="text-transform: uppercase; letter-spacing: 4px; font-size: 1.5rem; text-align: center;">
-                <label class="input-label">Rumskod</label>
-            </div>
-
-            <button class="btn btn-primary btn-lg w-full" onclick="joinRoom()">
-                <span>🚪</span> Anslut till Rum
-            </button>
-        </div>
+    <div id="joinScreen" class="screen">
+        <h2>Gå Med i Rum</h2>
+        <input type="text" id="joinCode" placeholder="Rumskod (6 bokstäver)" maxlength="6" style="text-transform: uppercase;">
+        <button class="btn-primary" onclick="joinRoom()">Anslut</button>
+        <button onclick="showScreen('setupScreen')">Tillbaka</button>
     </div>
 
     <!-- Lobby Screen -->
-    <div class="screen" id="lobbyScreen">
-        <div class="glass-card">
-            <div class="room-code-container">
-                <div class="room-code-label">Din Rumskod</div>
-                <div class="room-code" id="roomCodeDisplay">------</div>
-                <button class="copy-btn" onclick="copyRoomCode()">📋 Kopiera</button>
-            </div>
-
-            <div class="rounds-track" id="lobbyRounds"></div>
-
-            <div class="players-section">
-                <h3 class="title-md">Spelare (<span id="playerCount">1</span>/8)</h3>
-                <div class="players-grid" id="playersGrid"></div>
-            </div>
-
-            <div class="settings-panel" id="hostSettings">
-                <h4 class="title-md" style="margin-bottom: 1rem;">⚙️ Spelinställningar</h4>
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <h4>Rit-tid</h4>
-                        <p>Tid för att rita varje bild</p>
-                    </div>
-                    <div class="setting-control">
-                        <input type="number" class="number-input" id="drawTimeSetting" value="60" min="30" max="180" step="15">
-                        <span>sek</span>
-                    </div>
-                </div>
-                <div class="setting-row">
-                    <div class="setting-info">
-                        <h4>Antal rundor</h4>
-                        <p>Hur många omgångar att spela</p>
-                    </div>
-                    <div class="setting-control">
-                        <input type="number" class="number-input" id="roundCountSetting" value="6" min="4" max="12" step="2">
-                    </div>
-                </div>
-            </div>
-
-            <div class="flex gap-2 mt-3" id="lobbyActions">
-                <button class="btn btn-success btn-lg flex-1" id="startGameBtn" onclick="startGame()">
-                    <span>🚀</span> Starta Spelet
-                </button>
-                <button class="btn btn-outline" onclick="leaveRoom()">
-                    <span>🚪</span> Lämna
-                </button>
-            </div>
+    <div id="lobbyScreen" class="screen">
+        <h2>Lobby</h2>
+        <div class="room-code-box">
+            <div>Rumskod:</div>
+            <div class="room-code" id="roomCode">------</div>
+            <button onclick="copyCode()" style="width: auto; padding: 10px 20px;">Kopiera</button>
         </div>
+        <div class="players-grid" id="playersGrid"></div>
+        <div id="hostControls">
+            <input type="number" id="drawTime" value="60" min="30" max="120" style="width: 100px; display: inline;">
+            <span>sekunder att rita</span>
+            <button class="btn-success" onclick="startGame()" style="margin-top: 15px;">Starta Spelet!</button>
+        </div>
+        <button onclick="leaveRoom()">Lämna Rum</button>
     </div>
 
     <!-- Drawing Screen -->
-    <div class="screen" id="drawingScreen">
-        <div class="drawing-container">
-            <div class="drawing-header">
-                <div class="prompt-display" id="drawPrompt">
-                    Väntar på prompt...
-                </div>
-                <div class="timer-display" id="drawTimer">60</div>
-            </div>
-
-            <div class="rounds-track" id="drawRounds"></div>
-
-            <div class="canvas-wrapper">
-                <canvas id="drawingCanvas"></canvas>
-                <div class="canvas-placeholder" id="canvasPlaceholder">Börja rita här!</div>
-            </div>
-
-            <div class="toolbar">
-                <div class="tool-section">
-                    <button class="tool-btn active" onclick="setTool('pen')" title="Penna">✏️</button>
-                    <button class="tool-btn" onclick="setTool('eraser')" title="Sudd">🧼</button>
-                    <button class="tool-btn" onclick="clearCanvas()" title="Rensa allt">🗑️</button>
-                    <button class="tool-btn" onclick="undo()" title="Ångra">↩️</button>
-                    <button class="tool-btn" onclick="redo()" title="Gör om">↪️</button>
-                </div>
-
-                <div class="tool-section" id="colorPalette">
-                    <div class="color-btn active" style="background: #0f172a;" data-color="#0f172a" title="Svart"></div>
-                    <div class="color-btn" style="background: #ef4444;" data-color="#ef4444" title="Röd"></div>
-                    <div class="color-btn" style="background: #f97316;" data-color="#f97316" title="Orange"></div>
-                    <div class="color-btn" style="background: #eab308;" data-color="#eab308" title="Gul"></div>
-                    <div class="color-btn" style="background: #22c55e;" data-color="#22c55e" title="Grön"></div>
-                    <div class="color-btn" style="background: #06b6d4;" data-color="#06b6d4" title="Cyan"></div>
-                    <div class="color-btn" style="background: #3b82f6;" data-color="#3b82f6" title="Blå"></div>
-                    <div class="color-btn" style="background: #8b5cf6;" data-color="#8b5cf6" title="Lila"></div>
-                    <div class="color-btn" style="background: #ec4899;" data-color="#ec4899" title="Rosa"></div>
-                    <div class="color-btn" style="background: #78716c;" data-color="#78716c" title="Brun"></div>
-                    <div class="color-btn" style="background: #ffffff; border: 2px solid #e2e8f0;" data-color="#ffffff" title="Vit"></div>
-                </div>
-
-                <div class="tool-section" id="sizePalette">
-                    <div class="size-btn active" style="width: 12px; height: 12px;" data-size="2" title="Tunn"></div>
-                    <div class="size-btn" style="width: 20px; height: 20px;" data-size="5" title="Medium"></div>
-                    <div class="size-btn" style="width: 28px; height: 28px;" data-size="10" title="Tjock"></div>
-                    <div class="size-btn" style="width: 36px; height: 36px;" data-size="20" title="Extra tjock"></div>
-                </div>
-
-                <button class="btn btn-success" onclick="submitDrawing()">
-                    <span>✅</span> Klar!
-                </button>
-            </div>
+    <div id="drawingScreen" class="screen">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div style="font-weight: bold; font-size: 1.2rem;" id="drawPrompt">Rita: ...</div>
+            <div class="timer" id="drawTimer">60</div>
         </div>
+        <div class="canvas-container">
+            <canvas id="drawingCanvas" width="700" height="400"></canvas>
+        </div>
+        <div class="tools">
+            <button class="tool-btn active" onclick="setTool('pen')">✏️</button>
+            <button class="tool-btn" onclick="setTool('eraser')">🧽</button>
+            <button class="tool-btn" onclick="clearCanvas()">🗑️</button>
+            <div class="color-btn active" style="background: #000;" onclick="setColor('#000')"></div>
+            <div class="color-btn" style="background: #ef4444;" onclick="setColor('#ef4444')"></div>
+            <div class="color-btn" style="background: #3b82f6;" onclick="setColor('#3b82f6')"></div>
+            <div class="color-btn" style="background: #10b981;" onclick="setColor('#10b981')"></div>
+        </div>
+        <button class="btn-success" onclick="submitDrawing()">Klar!</button>
     </div>
 
     <!-- Writing Screen -->
-    <div class="screen" id="writingScreen">
-        <div class="glass-card writing-container">
-            <h2 class="title-lg">Vad ser du på bilden?</h2>
-            
-            <div class="timer-display warning" id="writeTimer" style="margin: 1rem auto; position: relative;">45</div>
-
-            <div class="rounds-track" id="writeRounds"></div>
-
-            <div class="drawing-preview">
-                <img id="displayedDrawing" src="" alt="Ritning att beskriva">
-            </div>
-
-            <div class="guess-form">
-                <input type="text" class="guess-input-large" id="guessInput" placeholder="Beskriv vad du ser..." maxlength="60">
-                <button class="btn btn-primary btn-lg w-full mt-2" onclick="submitGuess()">
-                    <span>💬</span> Skicka Beskrivning
-                </button>
-            </div>
-        </div>
+    <div id="writingScreen" class="screen">
+        <h2>Vad ser du?</h2>
+        <div class="timer" id="writeTimer">45</div>
+        <img id="showDrawing" style="max-width: 100%; border-radius: 10px; margin-bottom: 15px;">
+        <input type="text" id="guessInput" placeholder="Beskriv bilden..." maxlength="50">
+        <button class="btn-primary" onclick="submitGuess()">Skicka</button>
     </div>
 
     <!-- Waiting Screen -->
-    <div class="screen" id="waitingScreen">
-        <div class="glass-card waiting-container">
-            <div class="waiting-animation">
-                <div class="spinner"></div>
-                <div class="spinner-inner"></div>
-            </div>
-            
-            <h2 class="title-lg">Väntar på andra spelare...</h2>
-            <p style="color: var(--gray); margin-bottom: 1.5rem;">Alla måste vara klara innan vi fortsätter</p>
-
-            <div class="progress-container">
-                <div class="progress-bar-large">
-                    <div class="progress-fill-large" id="waitProgress" style="width: 0%"></div>
-                </div>
-                <p class="text-center mt-2" style="font-weight: 700; color: var(--primary);">
-                    <span id="readyCount">0</span> / <span id="totalCount">4</span> klara
-                </p>
-            </div>
-
-            <div class="waiting-players" id="waitingPlayers"></div>
+    <div id="waitingScreen" class="screen">
+        <h2>Väntar på andra...</h2>
+        <div style="width: 100%; height: 20px; background: #eee; border-radius: 10px; margin: 20px 0;">
+            <div id="waitProgress" style="width: 0%; height: 100%; background: #667eea; border-radius: 10px; transition: 0.5s;"></div>
         </div>
+        <p id="waitText">0 / 4 klara</p>
     </div>
 
     <!-- Results Screen -->
-    <div class="screen" id="resultsScreen">
-        <div class="results-container">
-            <h1 class="title-xl mb-2">🎉 Resultaten är här!</h1>
-            <p class="text-center mb-4" style="color: var(--gray);">Se hur meningarna förvrängdes genom spelet</p>
-            
-            <div id="chainsContainer"></div>
-
-            <div class="flex gap-2 justify-center mt-4 mb-4">
-                <button class="btn btn-primary btn-lg" onclick="playAgain()">
-                    <span>🔄</span> Spela Igen
-                </button>
-                <button class="btn btn-secondary btn-lg" onclick="backToLobby()">
-                    <span>🏠</span> Tillbaka till Lobbyn
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Game Over Modal -->
-    <div class="modal-overlay" id="gameOverModal">
-        <div class="modal-content">
-            <h2 class="title-lg">🎊 Spelet är slut!</h2>
-            <p class="mb-3">Alla kedjor är kompletta.Redo att se resultaten?</p>
-            <button class="btn btn-primary btn-lg w-full" onclick="showResults()">
-                <span>👀</span> Visa Resultat
-            </button>
-        </div>
+    <div id="resultsScreen" class="screen">
+        <h2>Resultat!</h2>
+        <div id="resultsList"></div>
+        <button class="btn-primary" onclick="playAgain()">Spela Igen</button>
+        <button onclick="backToLobby()">Tillbaka till Lobby</button>
     </div>
 
     <script>
-        // ==========================================
-        // GAME STATE & CONFIGURATION
-        // ==========================================
-        
-        const CONFIG = {
-            MAX_PLAYERS: 8,
-            MIN_PLAYERS: 2,
-            DEFAULT_DRAW_TIME: 60,
-            DEFAULT_ROUNDS: 6,
-            PEER_CONFIG: {
-                host: '0.peerjs.com',
-                port: 443,
-                secure: true,
-                config: {
-                    iceServers: [
-                        { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
-                    ]
-                }
-            }
+        // ==================== FIREBASE CONFIG ====================
+        // BYT UT DENNA MOT DIN EGNA FRÅN FIREBASE:
+        const firebaseConfig = {
+  apiKey: "AIzaSyB0wUCaXCqWhDcgMOLPC_pIS4PRQLkpOrw",
+  authDomain: "gartic-phone-game-b9a00.firebaseapp.com",
+  projectId: "gartic-phone-game-b9a00",
+  storageBucket: "gartic-phone-game-b9a00.firebasestorage.app",
+  messagingSenderId: "18038938341",
+  appId: "1:18038938341:web:858f7876b097dfdec0520c",
+  measurementId: "G-F60YS5KCWS"
+};
+
+        // Initiera Firebase
+        let app, database, roomRef;
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            document.getElementById('status').className = 'status online';
+            document.getElementById('status').textContent = 'Online';
+        } catch (e) {
+            console.log('Firebase inte konfigurerat, kör i demo-läge');
+        }
+
+        // ==================== SPEL-TILLSTÅND ====================
+        const state = {
+            player: { id: Math.random().toString(36).substr(2, 9), name: '', isHost: false },
+            room: { code: null, players: [] },
+            game: { round: 0, phase: 'lobby', chains: [], myChain: null },
+            canvas: { tool: 'pen', color: '#000', isDrawing: false }
         };
 
-        const GAME_STATE = {
-            player: {
-                id: null,
-                name: '',
-                avatar: '🎨',
-                isHost: false
-            },
-            room: {
-                code: null,
-                players: [],
-                settings: {
-                    drawTime: CONFIG.DEFAULT_DRAW_TIME,
-                    rounds: CONFIG.DEFAULT_ROUNDS
-                }
-            },
-            game: {
-                currentRound: 0,
-                phase: 'lobby', // lobby, drawing, writing, waiting, results
-                chains: [],
-                currentPrompt: null,
-                timer: null,
-                timeLeft: 0
-            },
-            network: {
-                peer: null,
-                connections: {},
-                isConnected: false
-            },
-            canvas: {
-                tool: 'pen',
-                color: '#0f172a',
-                size: 2,
-                isDrawing: false,
-                strokes: [],
-                currentStroke: [],
-                redoStack: []
-            }
-        };
+        const PROMPTS = [
+            "En katt som dansar", "En elefant på rymmen", "En pirat som lagar mat",
+            "En robot som gråter", "En enhörning i rymden", "En dinosaurie som spelar gitarr",
+            "En astronaut som fikar", "Ett spöke på semester", "En drake som yogar"
+        ];
 
-        // ==========================================
-        // UTILITY FUNCTIONS
-        // ==========================================
-
-        function generateId() {
-            return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        }
-
-        function generateRoomCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 6; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return code;
-        }
-
-        function showToast(message, type = 'info', duration = 3000) {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, duration);
-        }
-
-        function showScreen(screenId) {
+        // ==================== HJÄLPFUNKTIONER ====================
+        function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+            document.getElementById(id).classList.add('active');
         }
 
-        function updateConnectionStatus(status, text) {
-            const el = document.getElementById('connectionStatus');
-            el.className = `connection-status ${status}`;
-            document.getElementById('connectionText').textContent = text;
+        function generateCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
         }
 
-        // ==========================================
-        // AVATAR & SETUP
-        // ==========================================
-
-        function initSetup() {
-            const grid = document.getElementById('avatarGrid');
-            const options = grid.querySelectorAll('.avatar-option');
+        // ==================== RUM-HANTERING ====================
+        function createRoom() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) { alert('Ange ett namn!'); return; }
             
-            options.forEach(opt => {
-                opt.addEventListener('click', () => {
-                    options.forEach(o => o.classList.remove('selected'));
-                    opt.classList.add('selected');
-                    GAME_STATE.player.avatar = opt.dataset.avatar;
+            state.player.name = name;
+            state.player.isHost = true;
+            state.room.code = generateCode();
+            state.room.players = [{...state.player}];
+            
+            // Spara till Firebase
+            if (database) {
+                roomRef = database.ref('rooms/' + state.room.code);
+                roomRef.set({
+                    players: state.room.players,
+                    phase: 'lobby',
+                    settings: { drawTime: 60 },
+                    created: Date.now()
                 });
-            });
-
-            // Load saved name
-            const savedName = localStorage.getItem('gartic_name');
-            if (savedName) {
-                document.getElementById('playerNameInput').value = savedName;
-            }
-
-            // Initialize PeerJS
-            initPeer();
-        }
-
-        function getPlayerName() {
-            const name = document.getElementById('playerNameInput').value.trim();
-            return name || 'Anonym';
-        }
-
-        // ==========================================
-        // PEERJS NETWORKING
-        // ==========================================
-
-        function initPeer() {
-            updateConnectionStatus('connecting', 'Initierar...');
-            
-            GAME_STATE.player.id = generateId();
-            
-            try {
-                GAME_STATE.network.peer = new Peer(GAME_STATE.player.id, CONFIG.PEER_CONFIG);
                 
-                GAME_STATE.network.peer.on('open', (id) => {
-                    updateConnectionStatus('connected', 'Ansluten');
-                    GAME_STATE.network.isConnected = true;
-                    console.log('PeerJS connected:', id);
+                // Lyssna på ändringar
+                roomRef.on('value', (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        state.room.players = data.players || [];
+                        updateLobby();
+                        if (data.phase === 'drawing' && state.game.phase === 'lobby') {
+                            startDrawingPhase(data);
+                        }
+                    }
                 });
-
-                GAME_STATE.network.peer.on('connection', (conn) => {
-                    handleIncomingConnection(conn);
-                });
-
-                GAME_STATE.network.peer.on('error', (err) => {
-                    console.error('PeerJS error:', err);
-                    updateConnectionStatus('error', 'Fel: ' + err.type);
-                    showToast('Anslutningsfel: ' + err.type, 'error');
-                });
-
-            } catch (e) {
-                console.error('Failed to init PeerJS:', e);
-                updateConnectionStatus('error', 'Offline-läge');
-                showToast('Multiplayer inte tillgängligt - spela i offline-läge', 'info');
             }
+            
+            document.getElementById('roomCode').textContent = state.room.code;
+            document.getElementById('hostControls').style.display = 'block';
+            updateLobby();
+            showScreen('lobbyScreen');
         }
 
-        function handleIncomingConnection(conn) {
-            conn.on('open', () => {
-                GAME_STATE.network.connections[conn.peer] = conn;
-                console.log('Connected to:', conn.peer);
+        function showJoin() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) { alert('Ange ett namn först!'); return; }
+            state.player.name = name;
+            showScreen('joinScreen');
+        }
+
+        function joinRoom() {
+            const code = document.getElementById('joinCode').value.toUpperCase();
+            if (code.length !== 6) { alert('Ogiltig kod!'); return; }
+            
+            state.room.code = code;
+            state.player.isHost = false;
+            
+            if (database) {
+                roomRef = database.ref('rooms/' + code);
                 
-                // Send current room state to new player
-                if (GAME_STATE.player.isHost) {
-                    conn.send({
-                        type: 'room_state',
-                        data: {
-                            code: GAME_STATE.room.code,
-                            players: GAME_STATE.room.players,
-                            settings: GAME_STATE.room.settings
+                roomRef.once('value').then((snapshot) => {
+                    const data = snapshot.val();
+                    if (!data) { alert('Rummet finns inte!'); return; }
+                    
+                    // Lägg till spelare
+                    const players = data.players || [];
+                    players.push({...state.player});
+                    roomRef.update({ players: players });
+                    
+                    // Lyssna på ändringar
+                    roomRef.on('value', (snap) => {
+                        const d = snap.val();
+                        if (d) {
+                            state.room.players = d.players || [];
+                            updateLobby();
+                            if (d.phase === 'drawing' && state.game.phase === 'lobby') {
+                                startDrawingPhase(d);
+                            }
                         }
                     });
-                }
-            });
-
-            conn.on('data', (data) => {
-                handleNetworkMessage(data, conn.peer);
-            });
-
-            conn.on('close', () => {
-                delete GAME_STATE.network.connections[conn.peer];
-                handlePlayerDisconnect(conn.peer);
-            });
-
-            conn.on('error', (err) => {
-                console.error('Connection error:', err);
-            });
-        }
-
-        function connectToPeer(peerId) {
-            if (!GAME_STATE.network.peer || GAME_STATE.network.connections[peerId]) {
-                return Promise.resolve();
+                });
+            } else {
+                // Demo-läge
+                state.room.players = [
+                    { id: '1', name: 'Värd', isHost: true },
+                    { id: '2', name: 'Anna', isHost: false },
+                    state.player
+                ];
+                updateLobby();
             }
-
-            return new Promise((resolve, reject) => {
-                const conn = GAME_STATE.network.peer.connect(peerId, {
-                    reliable: true
-                });
-
-                const timeout = setTimeout(() => {
-                    reject(new Error('Connection timeout'));
-                }, 10000);
-
-                conn.on('open', () => {
-                    clearTimeout(timeout);
-                    GAME_STATE.network.connections[peerId] = conn;
-                    resolve(conn);
-                });
-
-                conn.on('data', (data) => {
-                    handleNetworkMessage(data, peerId);
-                });
-
-                conn.on('close', () => {
-                    delete GAME_STATE.network.connections[peerId];
-                });
-
-                conn.on('error', reject);
-            });
-        }
-
-        function broadcast(message, exclude = null) {
-            Object.entries(GAME_STATE.network.connections).forEach(([peerId, conn]) => {
-                if (peerId !== exclude && conn.open) {
-                    conn.send(message);
-                }
-            });
-        }
-
-        function handleNetworkMessage(data, fromPeerId) {
-            console.log('Received:', data.type, 'from', fromPeerId);
             
-            switch (data.type) {
-                case 'room_state':
-                    // Joined a room, update local state
-                    GAME_STATE.room.code = data.data.code;
-                    GAME_STATE.room.players = data.data.players;
-                    GAME_STATE.room.settings = data.data.settings;
-                    updateLobbyUI();
-                    break;
-
-                case 'player_joined':
-                    GAME_STATE.room.players.push(data.data);
-                    updateLobbyUI();
-                    showToast(`${data.data.name} anslöt!`, 'success');
-                    break;
-
-                case 'player_left':
-                    handlePlayerDisconnect(data.data.playerId);
-                    break;
-
-                case 'game_started':
-                    startGameLocal(data.data);
-                    break;
-
-                case 'drawing_submitted':
-                    handleDrawingSubmitted(data.data);
-                    break;
-
-                case 'guess_submitted':
-                    handleGuessSubmitted(data.data);
-                    break;
-
-                case 'settings_changed':
-                    GAME_STATE.room.settings = data.data;
-                    updateSettingsUI();
-                    break;
-            }
-        }
-
-        function handlePlayerDisconnect(peerId) {
-            const player = GAME_STATE.room.players.find(p => p.id === peerId);
-            if (player) {
-                GAME_STATE.room.players = GAME_STATE.room.players.filter(p => p.id !== peerId);
-                updateLobbyUI();
-                showToast(`${player.name} lämnade`, 'info');
-            }
-        }
-
-        // ==========================================
-        // ROOM MANAGEMENT
-        // ==========================================
-
-        async function createRoom() {
-            const name = getPlayerName();
-            localStorage.setItem('gartic_name', name);
-            
-            GAME_STATE.player.name = name;
-            GAME_STATE.player.isHost = true;
-            GAME_STATE.room.code = generateRoomCode();
-            GAME_STATE.room.players = [{
-                id: GAME_STATE.player.id,
-                name: name,
-                avatar: GAME_STATE.player.avatar,
-                isHost: true
-            }];
-
-            updateLobbyUI();
+            document.getElementById('roomCode').textContent = code;
+            document.getElementById('hostControls').style.display = 'none';
             showScreen('lobbyScreen');
-            showToast('Rum skapat! Dela koden med vänner.', 'success');
-            
-            // Simulate other players joining for demo
-            if (!GAME_STATE.network.isConnected) {
-                simulatePlayersJoining();
-            }
         }
 
-        function showJoinScreen() {
-            const name = getPlayerName();
-            if (!name || name === 'Anonym') {
-                showToast('Ange ett namn först!', 'error');
-                document.getElementById('playerNameInput').focus();
-                return;
-            }
-            localStorage.setItem('gartic_name', name);
-            GAME_STATE.player.name = name;
-            showScreen('joinScreen');
-            document.getElementById('joinCodeInput').focus();
+        function updateLobby() {
+            const grid = document.getElementById('playersGrid');
+            grid.innerHTML = '';
+            state.room.players.forEach(p => {
+                const div = document.createElement('div');
+                div.className = 'player-card';
+                div.innerHTML = `<div class="player-avatar">🎨</div><div>${p.name}${p.isHost ? ' 👑' : ''}</div>`;
+                grid.appendChild(div);
+            });
         }
 
-        async function joinRoom() {
-            const code = document.getElementById('joinCodeInput').value.toUpperCase().trim();
-            
-            if (code.length !== 6) {
-                showToast('Ange en giltig 6-teckens kod!', 'error');
-                return;
-            }
-
-            GAME_STATE.player.isHost = false;
-            GAME_STATE.room.code = code;
-            
-            // For demo: simulate joining
-            GAME_STATE.room.players = [
-                { id: 'demo-host', name: 'Värd', avatar: '🎮', isHost: true },
-                { id: 'demo-1', name: 'Anna', avatar: '🎨', isHost: false },
-                { id: 'demo-2', name: 'Erik', avatar: '🎯', isHost: false },
-                GAME_STATE.player
-            ];
-
-            document.getElementById('hostSettings').style.display = 'none';
-            document.getElementById('startGameBtn').style.display = 'none';
-            
-            updateLobbyUI();
-            showScreen('lobbyScreen');
-            showToast('Anslöt till rum!', 'success');
-        }
-
-        function simulatePlayersJoining() {
-            const names = ['Anna', 'Erik', 'Lisa', 'Marcus', 'Sara', 'Johan'];
-            const avatars = ['🎨', '🎭', '🎪', '🎯', '🎲', '🎸'];
-            
-            let i = 0;
-            const interval = setInterval(() => {
-                if (i >= 3 || !document.getElementById('lobbyScreen').classList.contains('active')) {
-                    clearInterval(interval);
-                    return;
-                }
-                
-                const newPlayer = {
-                    id: 'sim-' + i,
-                    name: names[i],
-                    avatar: avatars[i],
-                    isHost: false
-                };
-                
-                GAME_STATE.room.players.push(newPlayer);
-                updateLobbyUI();
-                showToast(`${newPlayer.name} anslöt!`, 'success');
-                i++;
-            }, 3000);
+        function copyCode() {
+            navigator.clipboard.writeText(state.room.code);
+            alert('Kod kopierad!');
         }
 
         function leaveRoom() {
-            if (confirm('Vill du verkligen lämna rummet?')) {
-                GAME_STATE.room.players = [];
-                GAME_STATE.room.code = null;
-                GAME_STATE.player.isHost = false;
-                showScreen('setupScreen');
-            }
-        }
-
-        function copyRoomCode() {
-            const code = GAME_STATE.room.code;
-            navigator.clipboard.writeText(code).then(() => {
-                showToast('Kod kopierad!', 'success');
-            }).catch(() => {
-                // Fallback
-                const input = document.createElement('input');
-                input.value = code;
-                document.body.appendChild(input);
-                input.select();
-                document.execCommand('copy');
-                document.body.removeChild(input);
-                showToast('Kod kopierad!', 'success');
-            });
-        }
-
-        // ==========================================
-        // LOBBY UI
-        // ==========================================
-
-        function updateLobbyUI() {
-            document.getElementById('roomCodeDisplay').textContent = GAME_STATE.room.code || '------';
-            document.getElementById('playerCount').textContent = GAME_STATE.room.players.length;
-            
-            const grid = document.getElementById('playersGrid');
-            grid.innerHTML = '';
-            
-            GAME_STATE.room.players.forEach(player => {
-                const isYou = player.id === GAME_STATE.player.id;
-                const card = document.createElement('div');
-                card.className = 'player-card';
-                card.innerHTML = `
-                    ${player.isHost ? '<div class="host-crown">👑</div>' : ''}
-                    ${isYou ? '<div class="you-badge">DU</div>' : ''}
-                    <div class="player-avatar-large">${player.avatar}</div>
-                    <div class="player-name">${player.name}</div>
-                    <div class="player-status">${isYou ? 'Redo' : 'Väntar...'}</div>
-                `;
-                grid.appendChild(card);
-            });
-
-            // Update rounds display
-            const roundsContainer = document.getElementById('lobbyRounds');
-            roundsContainer.innerHTML = '';
-            const rounds = parseInt(document.getElementById('roundCountSetting')?.value || 6);
-            for (let i = 1; i <= rounds; i++) {
-                const node = document.createElement('div');
-                node.className = 'round-node pending';
-                node.textContent = i;
-                roundsContainer.appendChild(node);
-            }
-
-            // Enable/disable start button
-            const startBtn = document.getElementById('startGameBtn');
-            if (startBtn && GAME_STATE.player.isHost) {
-                startBtn.disabled = GAME_STATE.room.players.length < CONFIG.MIN_PLAYERS;
-                if (startBtn.disabled) {
-                    startBtn.title = `Behöver minst ${CONFIG.MIN_PLAYERS} spelare`;
+            if (database && roomRef) {
+                roomRef.off();
+                if (state.player.isHost) {
+                    roomRef.remove();
+                } else {
+                    const players = state.room.players.filter(p => p.id !== state.player.id);
+                    roomRef.update({ players: players });
                 }
             }
+            location.reload();
         }
 
-        function updateSettingsUI() {
-            document.getElementById('drawTimeSetting').value = GAME_STATE.room.settings.drawTime;
-            document.getElementById('roundCountSetting').value = GAME_STATE.room.settings.rounds;
-        }
-
-        // Settings change handlers
-        document.getElementById('drawTimeSetting')?.addEventListener('change', (e) => {
-            GAME_STATE.room.settings.drawTime = parseInt(e.target.value);
-            if (GAME_STATE.player.isHost) {
-                broadcast({ type: 'settings_changed', data: GAME_STATE.room.settings });
-            }
-        });
-
-        document.getElementById('roundCountSetting')?.addEventListener('change', (e) => {
-            GAME_STATE.room.settings.rounds = parseInt(e.target.value);
-            updateLobbyUI();
-            if (GAME_STATE.player.isHost) {
-                broadcast({ type: 'settings_changed', data: GAME_STATE.room.settings });
-            }
-        });
-
-        // ==========================================
-        // GAME LOGIC
-        // ==========================================
-
-        const SAMPLE_PROMPTS = [
-            "En katt som dansar balett",
-            "En elefant som åker skateboard",
-            "En pirat som lagar sushi",
-            "En robot som gråter över en romantisk film",
-            "En enhörning som dricker kaffe i rymden",
-            "En dinosaurie som spelar elgitarr",
-            "En astronaut som bakar cupcakes",
-            "Ett spöke på semester i Hawaii",
-            "En drake som yogar på en bergstopp",
-            "En hund som surfar på en jättevåg",
-            "En groda som är en hemlig agent",
-            "Ett monster som har picknick",
-            "En kanin som boxas mot en känguru",
-            "En björn som målar ett självporträtt",
-            "En fisk som flyger med jetpack",
-            "En pingvin som är stand-up komiker",
-            "Ett lejon som kör en liten bil",
-            "En uggla som är nattsvart DJ",
-            "En sköldpadda som vinner ett lopp",
-            "En giraff som spelar basket"
-        ];
-
+        // ==================== SPEL-LOGIK ====================
         function startGame() {
-            if (GAME_STATE.room.players.length < CONFIG.MIN_PLAYERS) {
-                showToast(`Behöver minst ${CONFIG.MIN_PLAYERS} spelare!`, 'error');
-                return;
-            }
-
-            GAME_STATE.room.settings.drawTime = parseInt(document.getElementById('drawTimeSetting').value);
-            GAME_STATE.room.settings.rounds = parseInt(document.getElementById('roundCountSetting').value);
-
-            // Initialize chains
-            GAME_STATE.game.chains = GAME_STATE.room.players.map((player, index) => ({
-                owner: player,
-                items: [{
-                    type: 'prompt',
-                    content: SAMPLE_PROMPTS[index % SAMPLE_PROMPTS.length],
-                    author: player,
-                    round: 0
-                }],
-                currentPlayerIndex: 0
+            const drawTime = parseInt(document.getElementById('drawTime').value) || 60;
+            
+            // Skapa kedjor
+            state.game.chains = state.room.players.map((p, i) => ({
+                owner: p,
+                items: [{ type: 'text', content: PROMPTS[i % PROMPTS.length], author: p }],
+                nextPlayer: 0
             }));
-
-            broadcast({
-                type: 'game_started',
-                data: {
-                    chains: GAME_STATE.game.chains,
-                    settings: GAME_STATE.room.settings
-                }
-            });
-
-            startGameLocal({
-                chains: GAME_STATE.game.chains,
-                settings: GAME_STATE.room.settings
-            });
-        }
-
-        function startGameLocal(data) {
-            GAME_STATE.game.chains = data.chains;
-            GAME_STATE.room.settings = data.settings;
-            GAME_STATE.game.currentRound = 1;
             
-            showToast('Spelet börjar!', 'success');
-            startRound();
-        }
-
-        function startRound() {
-            const totalRounds = GAME_STATE.room.settings.rounds;
+            state.game.phase = 'drawing';
+            state.game.round = 1;
             
-            if (GAME_STATE.game.currentRound > totalRounds) {
-                showGameOver();
-                return;
+            if (database && roomRef) {
+                roomRef.update({
+                    phase: 'drawing',
+                    chains: state.game.chains,
+                    settings: { drawTime: drawTime, round: 1 }
+                });
             }
-
-            // Determine phase: odd rounds = drawing, even rounds = writing
-            const isDrawingPhase = GAME_STATE.game.currentRound % 2 === 1;
             
-            if (isDrawingPhase) {
-                startDrawingPhase();
-            } else {
-                startWritingPhase();
-            }
-
-            updateRoundIndicators();
+            startDrawingPhase({ settings: { drawTime: drawTime }, chains: state.game.chains });
         }
 
-        function updateRoundIndicators() {
-            const containers = ['lobbyRounds', 'drawRounds', 'writeRounds'];
-            const totalRounds = GAME_STATE.room.settings.rounds;
-            const currentRound = GAME_STATE.game.currentRound;
+        function startDrawingPhase(data) {
+            state.game.phase = 'drawing';
+            const drawTime = data.settings?.drawTime || 60;
             
-            containers.forEach(id => {
-                const container = document.getElementById(id);
-                if (!container) return;
-                
-                container.innerHTML = '';
-                for (let i = 1; i <= totalRounds; i++) {
-                    const node = document.createElement('div');
-                    node.className = 'round-node';
-                    
-                    if (i < currentRound) {
-                        node.classList.add('completed');
-                    } else if (i === currentRound) {
-                        node.classList.add('active');
-                    } else {
-                        node.classList.add('pending');
-                    }
-                    
-                    node.textContent = i;
-                    container.appendChild(node);
-                }
-            });
-        }
-
-        // ==========================================
-        // DRAWING PHASE
-        // ==========================================
-
-        function startDrawingPhase() {
-            // Find the chain where it's this player's turn to draw
-            const myChain = GAME_STATE.game.chains.find(chain => {
-                const myPlayerIndex = GAME_STATE.room.players.findIndex(p => p.id === GAME_STATE.player.id);
-                // In round 1, draw own prompt. In round 3, draw from previous guess, etc.
-                const expectedIndex = (GAME_STATE.game.currentRound - 1) / 2;
-                return chain.currentPlayerIndex === expectedIndex;
-            });
-
-            if (!myChain) {
-                // Should not happen in proper multiplayer
-                showToast('Fel: Hittade ingen kedja!', 'error');
-                return;
-            }
-
-            const lastItem = myChain.items[myChain.items.length - 1];
-            const prompt = lastItem.content;
+            // Hitta rätt kedja för denna spelare
+            const myIndex = state.room.players.findIndex(p => p.id === state.player.id);
+            state.game.myChain = state.game.chains[myIndex];
             
+            const prompt = state.game.myChain.items[0].content;
             document.getElementById('drawPrompt').textContent = `Rita: "${prompt}"`;
-            
-            // Reset canvas
-            clearCanvas();
-            GAME_STATE.canvas.strokes = [];
-            GAME_STATE.canvas.redoStack = [];
             
             showScreen('drawingScreen');
             initCanvas();
-            
-            // Start timer
-            startTimer(GAME_STATE.room.settings.drawTime, 'drawTimer', () => {
-                submitDrawing();
-            });
+            startTimer(drawTime, 'drawTimer', submitDrawing);
         }
 
+        // ==================== CANVAS ====================
         function initCanvas() {
             const canvas = document.getElementById('drawingCanvas');
-            const wrapper = canvas.parentElement;
+            const ctx = canvas.getContext('2d');
             
-            // Set canvas size
-            const rect = wrapper.getBoundingClientRect();
-            canvas.width = rect.width - 40;
-            canvas.height = Math.min(500, window.innerHeight * 0.5);
+            // Rita vit bakgrund
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
             
-            // Setup event listeners
-            setupCanvasEvents();
+            let drawing = false;
             
-            // Setup color palette
-            document.querySelectorAll('#colorPalette .color-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('#colorPalette .color-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    GAME_STATE.canvas.color = btn.dataset.color;
-                    setTool('pen');
-                });
-            });
-
-            // Setup size palette
-            document.querySelectorAll('#sizePalette .size-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('#sizePalette .size-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    GAME_STATE.canvas.size = parseInt(btn.dataset.size);
-                });
-            });
-        }
-
-        function setupCanvasEvents() {
-            const canvas = document.getElementById('drawingCanvas');
-            
-            const startDrawing = (e) => {
-                e.preventDefault();
-                GAME_STATE.canvas.isDrawing = true;
-                GAME_STATE.canvas.currentStroke = [];
-                const pos = getCanvasPos(e, canvas);
-                GAME_STATE.canvas.currentStroke.push(pos);
-                
-                const ctx = canvas.getContext('2d');
+            const start = (e) => {
+                drawing = true;
+                const pos = getPos(e, canvas);
                 ctx.beginPath();
                 ctx.moveTo(pos.x, pos.y);
-                
-                document.getElementById('canvasPlaceholder').classList.remove('visible');
             };
-
-            const draw = (e) => {
-                if (!GAME_STATE.canvas.isDrawing) return;
-                e.preventDefault();
-                
-                const pos = getCanvasPos(e, canvas);
-                GAME_STATE.canvas.currentStroke.push(pos);
-                
-                const ctx = canvas.getContext('2d');
-                ctx.lineWidth = GAME_STATE.canvas.size;
+            
+            const move = (e) => {
+                if (!drawing) return;
+                const pos = getPos(e, canvas);
+                ctx.lineWidth = state.canvas.tool === 'eraser' ? 20 : 3;
                 ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                
-                if (GAME_STATE.canvas.tool === 'eraser') {
-                    ctx.globalCompositeOperation = 'destination-out';
-                } else {
-                    ctx.globalCompositeOperation = 'source-over';
-                    ctx.strokeStyle = GAME_STATE.canvas.color;
-                }
-                
+                ctx.strokeStyle = state.canvas.tool === 'eraser' ? 'white' : state.canvas.color;
                 ctx.lineTo(pos.x, pos.y);
                 ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(pos.x, pos.y);
             };
-
-            const stopDrawing = () => {
-                if (!GAME_STATE.canvas.isDrawing) return;
-                
-                GAME_STATE.canvas.isDrawing = false;
-                if (GAME_STATE.canvas.currentStroke.length > 0) {
-                    GAME_STATE.canvas.strokes.push({
-                        tool: GAME_STATE.canvas.tool,
-                        color: GAME_STATE.canvas.color,
-                        size: GAME_STATE.canvas.size,
-                        points: [...GAME_STATE.canvas.currentStroke]
-                    });
-                    GAME_STATE.canvas.redoStack = []; // Clear redo on new stroke
-                }
-                
-                const ctx = canvas.getContext('2d');
-                ctx.beginPath();
-            };
-
-            // Mouse events
-            canvas.addEventListener('mousedown', startDrawing);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDrawing);
-            canvas.addEventListener('mouseout', stopDrawing);
-
-            // Touch events
-            canvas.addEventListener('touchstart', startDrawing, { passive: false });
-            canvas.addEventListener('touchmove', draw, { passive: false });
-            canvas.addEventListener('touchend', stopDrawing);
+            
+            const end = () => { drawing = false; ctx.beginPath(); };
+            
+            canvas.addEventListener('mousedown', start);
+            canvas.addEventListener('mousemove', move);
+            canvas.addEventListener('mouseup', end);
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e.touches[0]); });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e.touches[0]); });
+            canvas.addEventListener('touchend', end);
         }
 
-        function getCanvasPos(e, canvas) {
+        function getPos(e, canvas) {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
-            };
+            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
         }
 
         function setTool(tool) {
-            GAME_STATE.canvas.tool = tool;
-            document.querySelectorAll('.tool-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if (btn.textContent.includes(tool === 'pen' ? '✏️' : '🧼')) {
-                    btn.classList.add('active');
-                }
-            });
+            state.canvas.tool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function setColor(color) {
+            state.canvas.color = color;
+            state.canvas.tool = 'pen';
+            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+            document.querySelector('.tool-btn').classList.add('active');
         }
 
         function clearCanvas() {
             const canvas = document.getElementById('drawingCanvas');
             const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            GAME_STATE.canvas.strokes = [];
-            GAME_STATE.canvas.redoStack = [];
-        }
-
-        function undo() {
-            if (GAME_STATE.canvas.strokes.length === 0) return;
-            
-            const stroke = GAME_STATE.canvas.strokes.pop();
-            GAME_STATE.canvas.redoStack.push(stroke);
-            redrawCanvas();
-        }
-
-        function redo() {
-            if (GAME_STATE.canvas.redoStack.length === 0) return;
-            
-            const stroke = GAME_STATE.canvas.redoStack.pop();
-            GAME_STATE.canvas.strokes.push(stroke);
-            redrawCanvas();
-        }
-
-        function redrawCanvas() {
-            const canvas = document.getElementById('drawingCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            GAME_STATE.canvas.strokes.forEach(stroke => {
-                ctx.beginPath();
-                ctx.lineWidth = stroke.size;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-                
-                if (stroke.tool === 'eraser') {
-                    ctx.globalCompositeOperation = 'destination-out';
-                } else {
-                    ctx.globalCompositeOperation = 'source-over';
-                    ctx.strokeStyle = stroke.color;
-                }
-                
-                ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-                stroke.points.forEach(point => ctx.lineTo(point.x, point.y));
-                ctx.stroke();
-            });
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
         function submitDrawing() {
-            clearInterval(GAME_STATE.game.timer);
-            
             const canvas = document.getElementById('drawingCanvas');
-            const drawingData = canvas.toDataURL('image/png');
+            const image = canvas.toDataURL('image/png');
             
-            // Add to chain
-            const myChain = GAME_STATE.game.chains.find(chain => {
-                const expectedIndex = (GAME_STATE.game.currentRound - 1) / 2;
-                return chain.currentPlayerIndex === expectedIndex;
-            });
-
-            if (myChain) {
-                myChain.items.push({
-                    type: 'drawing',
-                    content: drawingData,
-                    author: GAME_STATE.player,
-                    round: GAME_STATE.game.currentRound
-                });
-                myChain.currentPlayerIndex++;
+            // Spara i kedjan
+            state.game.myChain.items.push({ type: 'image', content: image, author: state.player });
+            
+            if (database && roomRef) {
+                roomRef.child('chains').child(state.room.players.findIndex(p => p.id === state.player.id))
+                    .update({ items: state.game.myChain.items });
             }
-
-            broadcast({
-                type: 'drawing_submitted',
-                data: {
-                    playerId: GAME_STATE.player.id,
-                    chainIndex: GAME_STATE.game.chains.indexOf(myChain)
-                }
-            });
-
-            showWaitingScreen();
+            
+            showWaiting();
         }
 
-        // ==========================================
-        // WRITING PHASE
-        // ==========================================
-
-        function startWritingPhase() {
-            // Find drawing to describe
-            const myChain = GAME_STATE.game.chains.find(chain => {
-                const expectedIndex = (GAME_STATE.game.currentRound - 2) / 2;
-                return chain.currentPlayerIndex === expectedIndex && chain.items.length >= 2;
-            });
-
-            if (!myChain) {
-                showToast('Fel: Ingen ritning att beskriva!', 'error');
-                return;
-            }
-
-            const lastDrawing = myChain.items[myChain.items.length - 1];
-            if (lastDrawing.type !== 'drawing') {
-                showToast('Fel: Senaste item är inte en ritning!', 'error');
-                return;
-            }
-
-            document.getElementById('displayedDrawing').src = lastDrawing.content;
-            document.getElementById('guessInput').value = '';
-            
+        // ==================== SKRIV-FAS ====================
+        function showWriting() {
             showScreen('writingScreen');
-            document.getElementById('guessInput').focus();
-            
-            startTimer(45, 'writeTimer', () => {
-                submitGuess();
-            });
+            document.getElementById('showDrawing').src = state.game.currentImage;
+            document.getElementById('guessInput').value = '';
+            startTimer(45, 'writeTimer', submitGuess);
         }
 
         function submitGuess() {
-            clearInterval(GAME_STATE.game.timer);
-            
             const guess = document.getElementById('guessInput').value.trim();
-            if (!guess) {
-                showToast('Skriv en beskrivning först!', 'error');
-                // Restart timer or auto-submit placeholder
-                startTimer(10, 'writeTimer', () => {
-                    document.getElementById('guessInput').value = 'Jag vet inte...';
-                    submitGuess();
-                });
-                return;
-            }
-
-            const myChain = GAME_STATE.game.chains.find(chain => {
-                const expectedIndex = (GAME_STATE.game.currentRound - 2) / 2;
-                return chain.currentPlayerIndex === expectedIndex;
-            });
-
-            if (myChain) {
-                myChain.items.push({
-                    type: 'prompt',
-                    content: guess,
-                    author: GAME_STATE.player,
-                    round: GAME_STATE.game.currentRound
-                });
-                myChain.currentPlayerIndex++;
-            }
-
-            broadcast({
-                type: 'guess_submitted',
-                data: {
-                    playerId: GAME_STATE.player.id,
-                    chainIndex: GAME_STATE.game.chains.indexOf(myChain)
-                }
-            });
-
-            showWaitingScreen();
+            if (!guess) return;
+            
+            state.game.myChain.items.push({ type: 'text', content: guess, author: state.player });
+            showWaiting();
         }
 
-        // ==========================================
-        // WAITING & RESULTS
-        // ==========================================
-
-        function showWaitingScreen() {
+        // ==================== VÄNTNING & RESULTAT ====================
+        function showWaiting() {
             showScreen('waitingScreen');
-            
-            const totalPlayers = GAME_STATE.room.players.length;
-            let readyCount = 1; // This player is ready
-            
-            document.getElementById('readyCount').textContent = readyCount;
-            document.getElementById('totalCount').textContent = totalPlayers;
-            
-            const container = document.getElementById('waitingPlayers');
-            container.innerHTML = '';
-            
-            GAME_STATE.room.players.forEach(player => {
-                const div = document.createElement('div');
-                div.className = 'waiting-player' + (player.id === GAME_STATE.player.id ? ' ready' : '');
-                div.innerHTML = `
-                    <span class="status-dot"></span>
-                    <span>${player.avatar} ${player.name}</span>
-                `;
-                container.appendChild(div);
-            });
-
-            // Simulate progress
-            const progressBar = document.getElementById('waitProgress');
-            let progress = (readyCount / totalPlayers) * 100;
-            progressBar.style.width = progress + '%';
-
-            // Simulate other players finishing
-            if (!GAME_STATE.network.isConnected) {
-                const interval = setInterval(() => {
-                    if (!document.getElementById('waitingScreen').classList.contains('active')) {
-                        clearInterval(interval);
-                        return;
-                    }
-                    
-                    if (readyCount < totalPlayers) {
-                        readyCount++;
-                        document.getElementById('readyCount').textContent = readyCount;
-                        progress = (readyCount / totalPlayers) * 100;
-                        progressBar.style.width = progress + '%';
-                        
-                        // Update player status
-                        const playerDivs = container.querySelectorAll('.waiting-player');
-                        if (playerDivs[readyCount - 1]) {
-                            playerDivs[readyCount - 1].classList.add('ready');
-                        }
-                    } else {
-                        clearInterval(interval);
-                        setTimeout(() => {
-                            GAME_STATE.game.currentRound++;
-                            startRound();
-                        }, 1000);
-                    }
-                }, 1500);
-            }
-        }
-
-        function showGameOver() {
-            document.getElementById('gameOverModal').classList.add('active');
-            confetti({
-                particleCount: 100,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 25;
+                document.getElementById('waitProgress').style.width = progress + '%';
+                document.getElementById('waitText').textContent = `${Math.min(progress/25, 4)} / 4 klara`;
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(showResults, 500);
+                }
+            }, 1000);
         }
 
         function showResults() {
-            document.getElementById('gameOverModal').classList.remove('active');
             showScreen('resultsScreen');
+            const list = document.getElementById('resultsList');
+            list.innerHTML = '';
             
-            const container = document.getElementById('chainsContainer');
-            container.innerHTML = '';
-            
-            GAME_STATE.game.chains.forEach((chain, index) => {
-                const card = document.createElement('div');
-                card.className = 'chain-card';
-                card.style.animationDelay = (index * 0.1) + 's';
+            state.game.chains.forEach(chain => {
+                const div = document.createElement('div');
+                div.style.cssText = 'background: #f5f5f5; padding: 20px; margin: 15px 0; border-radius: 10px;';
                 
-                let itemsHtml = '';
+                let html = `<h3>${chain.owner.name}s kedja:</h3>`;
                 chain.items.forEach((item, i) => {
-                    if (i > 0) {
-                        itemsHtml += `<div class="chain-arrow">⬇️</div>`;
-                    }
-                    
-                    if (item.type === 'prompt') {
-                        itemsHtml += `
-                            <div class="chain-item">
-                                <div class="chain-icon">✏️</div>
-                                <div class="chain-content">
-                                    <div class="chain-text">"${item.content}"</div>
-                                    <div class="chain-author">av ${item.author.name}</div>
-                                </div>
-                            </div>
-                        `;
+                    if (item.type === 'text') {
+                        html += `<div class="chain-item">✏️ "${item.content}" - ${item.author.name}</div>`;
                     } else {
-                        itemsHtml += `
-                            <div class="chain-item">
-                                <div class="chain-icon">🎨</div>
-                                <div class="chain-content">
-                                    <img src="${item.content}" class="chain-drawing" alt="Ritning">
-                                    <div class="chain-author">av ${item.author.name}</div>
-                                </div>
-                            </div>
-                        `;
+                        html += `<div class="chain-item">🎨 <img src="${item.content}" class="chain-drawing"> - ${item.author.name}</div>`;
                     }
                 });
                 
-                card.innerHTML = `
-                    <div class="chain-header">
-                        <div class="chain-header-avatar">${chain.owner.avatar}</div>
-                        <div class="chain-header-info">
-                            <h3>${chain.owner.name}s kedja</h3>
-                            <p>Se hur meningen förvandlades!</p>
-                        </div>
-                    </div>
-                    <div class="chain-items">
-                        ${itemsHtml}
-                    </div>
-                `;
-                
-                container.appendChild(card);
+                div.innerHTML = html;
+                list.appendChild(div);
             });
         }
 
         function playAgain() {
-            GAME_STATE.game.currentRound = 0;
-            GAME_STATE.game.chains = [];
-            
-            // Reset chains
-            GAME_STATE.room.players.forEach((player, index) => {
-                GAME_STATE.game.chains.push({
-                    owner: player,
-                    items: [{
-                        type: 'prompt',
-                        content: SAMPLE_PROMPTS[Math.floor(Math.random() * SAMPLE_PROMPTS.length)],
-                        author: player,
-                        round: 0
-                    }],
-                    currentPlayerIndex: 0
-                });
-            });
-            
-            startRound();
+            state.game.round = 0;
+            state.game.phase = 'lobby';
+            if (state.player.isHost) {
+                startGame();
+            } else {
+                showScreen('waitingScreen');
+            }
         }
 
         function backToLobby() {
             showScreen('lobbyScreen');
-            updateLobbyUI();
         }
 
-        // ==========================================
-        // UTILITIES
-        // ==========================================
-
+        // ==================== TIMER ====================
+        let timerInterval;
         function startTimer(seconds, elementId, callback) {
-            GAME_STATE.game.timeLeft = seconds;
-            const timerEl = document.getElementById(elementId);
+            clearInterval(timerInterval);
+            let time = seconds;
+            const el = document.getElementById(elementId);
             
-            if (GAME_STATE.game.timer) clearInterval(GAME_STATE.game.timer);
-            
-            timerEl.textContent = seconds;
-            timerEl.classList.remove('warning');
-            
-            GAME_STATE.game.timer = setInterval(() => {
-                GAME_STATE.game.timeLeft--;
-                timerEl.textContent = GAME_STATE.game.timeLeft;
-                
-                if (GAME_STATE.game.timeLeft <= 10) {
-                    timerEl.classList.add('warning');
-                }
-                
-                if (GAME_STATE.game.timeLeft <= 0) {
-                    clearInterval(GAME_STATE.game.timer);
+            timerInterval = setInterval(() => {
+                time--;
+                el.textContent = time;
+                if (time <= 10) el.classList.add('warning');
+                if (time <= 0) {
+                    clearInterval(timerInterval);
                     callback();
                 }
             }, 1000);
         }
 
-        function handleDrawingSubmitted(data) {
-            console.log('Drawing submitted by', data.playerId);
-        }
-
-        function handleGuessSubmitted(data) {
-            console.log('Guess submitted by', data.playerId);
-        }
-
-        // Prevent accidental navigation
-        window.addEventListener('beforeunload', (e) => {
-            if (document.getElementById('drawingScreen').classList.contains('active') ||
-                document.getElementById('writingScreen').classList.contains('active')) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
+        // ==================== INIT ====================
+        // Ladda sparat namn
+        const saved = localStorage.getItem('garticName');
+        if (saved) document.getElementById('playerName').value = saved;
+        document.getElementById('playerName').addEventListener('change', (e) => {
+            localStorage.setItem('garticName', e.target.value);
         });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                if (e.key === 'z') {
-                    e.preventDefault();
-                    if (e.shiftKey) {
-                        redo();
-                    } else {
-                        undo();
-                    }
-                }
-            }
-            
-            if (e.key === 'Enter' && document.getElementById('joinScreen').classList.contains('active')) {
-                joinRoom();
-            }
-        });
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', initSetup);
     </script>
 </body>
 </html>
