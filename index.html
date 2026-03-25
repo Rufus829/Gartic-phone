@@ -3,980 +3,998 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gartic Phone - 100% P2P</title>
-    <!-- WebTorrent för DHT-upptäckt -->
-    <script src="https://cdn.jsdelivr.net/npm/webtorrent@latest/webtorrent.min.js"></script>
-    <!-- SimplePeer för WebRTC -->
-    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9/simplepeer.min.js"></script>
+    <title>Gartic Phone</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             padding: 20px;
-            color: white;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.95);
-            border-radius: 20px;
-            padding: 30px;
-            color: #333;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        }
-
-        h1 { text-align: center; color: #764ba2; margin-bottom: 20px; }
-
-        .screen { display: none; }
-        .screen.active { display: block; }
-
-        button, input {
+        .app {
             width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            border: 2px solid #ddd;
+            max-width: 900px;
+            background: var(--surface);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        input, button, textarea {
+            width: 100%;
+            padding: 16px 20px;
+            border-radius: 12px;
+            border: 2px solid #334155;
+            background: #0f172a;
+            color: var(--text);
             font-size: 16px;
+            margin: 10px 0;
+            transition: all 0.2s;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         button {
-            background: #764ba2;
-            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             border: none;
             cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         button:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(118,75,162,0.4);
+            box-shadow: 0 10px 30px -10px var(--primary);
         }
 
         button:disabled {
-            background: #ccc;
+            opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
 
-        .code-box {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        button.secondary {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        button.secondary:hover {
+            background: var(--primary);
             color: white;
+        }
+
+        .card {
+            background: #0f172a;
+            border-radius: 16px;
             padding: 30px;
-            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid #334155;
+        }
+
+        .room-code-display {
             text-align: center;
+            padding: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 16px;
             margin: 20px 0;
         }
 
-        .big-code {
-            font-size: 3em;
-            font-weight: bold;
-            letter-spacing: 10px;
+        .code-text {
+            font-size: 4rem;
+            font-weight: 800;
+            letter-spacing: 20px;
             font-family: monospace;
-            background: rgba(0,0,0,0.2);
-            padding: 20px;
-            border-radius: 10px;
-            margin: 10px 0;
             cursor: pointer;
             user-select: all;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        .peer-id-display {
-            font-size: 0.8em;
-            word-break: break-all;
-            background: rgba(0,0,0,0.1);
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-            font-family: monospace;
-        }
-
-        .status {
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            text-align: center;
-        }
-
-        .status.connecting { background: #fff3cd; color: #856404; }
-        .status.connected { background: #d4edda; color: #155724; }
-        .status.error { background: #f8d7da; color: #721c24; }
-
-        .players {
+        .players-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 15px;
             margin: 20px 0;
         }
 
-        .player {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 10px;
+        .player-card {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 20px;
             text-align: center;
+            border: 2px solid #334155;
+            transition: all 0.2s;
         }
 
-        .player.you { background: #d4edda; border: 2px solid #28a745; }
-        .player.host { background: #fff3cd; }
+        .player-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .player-card.host {
+            border-color: var(--secondary);
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), transparent);
+        }
+
+        .player-card.you {
+            border-color: var(--primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 10px;
+        }
+
+        .status {
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.9rem;
+            margin: 15px 0;
+        }
+
+        .status.info {
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .status.success {
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        .status.error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
 
         canvas {
             background: white;
-            border: 3px solid #764ba2;
-            border-radius: 10px;
+            border-radius: 12px;
+            cursor: crosshair;
             display: block;
             margin: 0 auto;
-            cursor: crosshair;
             touch-action: none;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
 
-        .tools {
+        .toolbar {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin: 15px 0;
+            gap: 12px;
+            margin: 20px 0;
             flex-wrap: wrap;
+            align-items: center;
         }
 
         .color-btn {
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             border: 3px solid transparent;
             cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .color-btn.active { border-color: #764ba2; transform: scale(1.2); }
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .color-btn.active {
+            border-color: white;
+            box-shadow: 0 0 0 3px var(--primary);
+            transform: scale(1.15);
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 8px;
+            background: #0f172a;
+            padding: 8px;
+            border-radius: 12px;
+        }
+
+        .tool-btn {
+            width: auto;
+            padding: 12px 20px;
+            margin: 0;
+            background: transparent;
+            border: 1px solid #334155;
+        }
+
+        .tool-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .word-display {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .word-display h2 {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .word-display .word {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .timer {
+            text-align: center;
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+
+        .timer.warning {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
 
         .gallery {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 20px;
         }
 
-        .art-piece {
-            background: white;
-            border-radius: 15px;
+        .art-card {
+            background: #0f172a;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: 1px solid #334155;
         }
 
-        .art-piece img { width: 100%; }
-        .art-piece .info { padding: 15px; text-align: center; }
+        .art-card img {
+            width: 100%;
+            display: block;
+        }
 
-        .qr-section {
-            margin: 20px 0;
+        .art-card .info {
+            padding: 20px;
+        }
+
+        .art-card .artist {
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .art-card .word {
+            color: var(--primary);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .qr-container {
             text-align: center;
+            margin: 20px 0;
         }
 
-        #qr-code {
+        #qrcode {
             display: inline-block;
             padding: 20px;
             background: white;
-            border-radius: 10px;
-        }
-
-        .manual-connect {
-            margin-top: 20px;
-            padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
+            border-radius: 12px;
         }
 
         textarea {
-            width: 100%;
-            padding: 10px;
             font-family: monospace;
             font-size: 12px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
+            min-height: 100px;
             resize: vertical;
         }
 
-        .step {
-            margin: 15px 0;
-            padding: 15px;
-            background: #e9ecef;
-            border-radius: 10px;
-            border-left: 4px solid #764ba2;
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
         }
 
-        .hidden { display: none !important; }
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        .step.active {
+            background: var(--primary);
+        }
+
+        .step.completed {
+            background: var(--secondary);
+        }
+
+        @media (max-width: 600px) {
+            .app {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .code-text {
+                font-size: 2.5rem;
+                letter-spacing: 10px;
+            }
+            
+            canvas {
+                max-width: 100%;
+                height: auto;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎨 Gartic Phone - Direkt P2P</h1>
-        
+    <div class="app">
+        <h1>🎨 Gartic Phone</h1>
+
         <!-- MENU -->
         <div id="screen-menu" class="screen active">
-            <input type="text" id="player-name" placeholder="Ditt namn" maxlength="20">
-            <button onclick="createRoom()" id="btn-create">Skapa rum & Vänta på vänner</button>
-            <button onclick="showJoin()" class="secondary" style="background: #6c757d;">Gå med i rum</button>
+            <div class="card">
+                <input type="text" id="player-name" placeholder="Ditt namn" maxlength="20">
+                <button onclick="createRoom()" id="btn-create">
+                    Skapa rum
+                </button>
+                <button onclick="showJoin()" class="secondary">
+                    Gå med i rum
+                </button>
+            </div>
             
-            <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
-                <h3 style="color: #764ba2; margin-bottom: 15px;">🔧 Så fungerar det:</h3>
-                <div class="step">1. <strong>Host</strong> skapar rum och får en unik kod</div>
-                <div class="step">2. <strong>Vänner</strong> skannar QR-kod eller klistrar in "anslutningskoden"</div>
-                <div class="step">3. Ni kopplas ihop <strong>direkt</strong> utan någon server!</div>
+            <div class="card" style="text-align: center;">
+                <p style="color: var(--text-muted); line-height: 1.6;">
+                    Rita och gissa med vänner i realtid!<br>
+                    Ingen server behövs - allt sker direkt mellan era enheter.
+                </p>
             </div>
         </div>
 
         <!-- JOIN -->
         <div id="screen-join" class="screen">
-            <div class="manual-connect">
-                <h3 style="margin-bottom: 15px;">Klistra in hostens anslutningskod:</h3>
-                <textarea id="join-token" rows="6" placeholder="Klistra in den långa koden här..."></textarea>
-                <button onclick="joinRoom()">Anslut</button>
-                <button onclick="showScreen('screen-menu')" style="background: #6c757d;">Tillbaka</button>
+            <div class="card">
+                <h3 style="margin-bottom: 15px;">Anslut till rum</h3>
+                <p style="color: var(--text-muted); margin-bottom: 15px;">
+                    Klistra in rummets kod från host:
+                </p>
+                <input type="text" id="join-code" placeholder="Rumskod" maxlength="20">
+                <button onclick="joinRoom()" id="btn-join">
+                    Anslut
+                </button>
+                <button onclick="showScreen('screen-menu')" class="secondary">
+                    Tillbaka
+                </button>
             </div>
         </div>
 
-        <!-- LOBBY HOST -->
-        <div id="screen-lobby-host" class="screen">
-            <div class="status connecting" id="host-status">Startar P2P-nätverk...</div>
-            
-            <div class="code-box">
-                <p style="font-size: 1.2em; margin-bottom: 10px;">🔑 Din anslutningskod:</p>
-                <div class="big-code" id="room-code" onclick="copyCode()">...</div>
-                <p style="font-size: 0.9em; opacity: 0.9;">Klicka för att kopiera, skicka till vänner!</p>
+        <!-- LOBBY -->
+        <div id="screen-lobby" class="screen">
+            <div class="room-code-display" onclick="copyRoomCode()">
+                <p style="margin-bottom: 10px; font-size: 1.1rem;">Dela denna kod:</p>
+                <div class="code-text" id="room-code">----</div>
+                <p style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
+                    Klicka för att kopiera
+                </p>
             </div>
 
-            <div class="qr-section">
-                <p style="margin-bottom: 10px;">Eller skanna denna QR-kod:</p>
-                <div id="qr-code"></div>
+            <div class="qr-container">
+                <div id="qrcode"></div>
             </div>
 
-            <div class="peer-id-display">
-                <strong>Teknisk info:</strong><br>
-                <span id="peer-id-text">Väntar...</span>
+            <div class="status info" id="lobby-status">
+                Väntar på spelare...
             </div>
 
-            <div class="players" id="players-list-host"></div>
-            
-            <button id="btn-start" onclick="startGame()" disabled>
-                Väntar på spelare... (minst 2 behövs)
+            <div class="players-grid" id="players-list"></div>
+
+            <button id="btn-start" onclick="startGame()" class="hidden">
+                Starta spelet!
             </button>
-        </div>
-
-        <!-- LOBBY CLIENT -->
-        <div id="screen-lobby-client" class="screen">
-            <div class="status connecting" id="client-status">Ansluter till host...</div>
-            <div class="players" id="players-list-client"></div>
-            <p style="text-align: center; color: #666;">Väntar på att host ska starta spelet...</p>
         </div>
 
         <!-- GAME -->
         <div id="screen-game" class="screen">
-            <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="color: #764ba2; font-size: 2em;" id="game-word">Laddar...</h2>
-                <div style="font-size: 3em; font-weight: bold; color: #764ba2;" id="game-timer">60</div>
+            <div class="word-display">
+                <h2>Rita detta ord:</h2>
+                <div class="word" id="game-word">Laddar...</div>
             </div>
-            
-            <canvas id="canvas" width="800" height="500"></canvas>
-            
-            <div class="tools">
-                <div class="color-btn active" style="background: #000" onclick="setColor('#000000')"></div>
-                <div class="color-btn" style="background: #e74c3c" onclick="setColor('#e74c3c')"></div>
-                <div class="color-btn" style="background: #3498db" onclick="setColor('#3498db')"></div>
-                <div class="color-btn" style="background: #2ecc71" onclick="setColor('#2ecc71')"></div>
-                <div class="color-btn" style="background: #f1c40f" onclick="setColor('#f1c40f')"></div>
-                <div class="color-btn" style="background: #9b59b6" onclick="setColor('#9b59b6')"></div>
-                <div class="color-btn" style="background: #fff; border: 2px solid #ddd" onclick="setColor('#ffffff')"></div>
+
+            <div class="timer" id="game-timer">60</div>
+
+            <canvas id="game-canvas" width="800" height="500"></canvas>
+
+            <div class="toolbar">
+                <div class="color-btn active" style="background: #000000" data-color="#000000" onclick="setColor(this)"></div>
+                <div class="color-btn" style="background: #ef4444" data-color="#ef4444" onclick="setColor(this)"></div>
+                <div class="color-btn" style="background: #3b82f6" data-color="#3b82f6" onclick="setColor(this)"></div>
+                <div class="color-btn" style="background: #22c55e" data-color="#22c55e" onclick="setColor(this)"></div>
+                <div class="color-btn" style="background: #eab308" data-color="#eab308" onclick="setColor(this)"></div>
+                <div class="color-btn" style="background: #a855f7" data-color="#a855f7" onclick="setColor(this)"></div>
+                <div class="color-btn" style="background: #f97316" data-color="#f97316" onclick="setColor(this)"></div>
+                <div class="color-btn" style="background: #ffffff" data-color="#ffffff" onclick="setColor(this)"></div>
+
+                <div class="tool-group">
+                    <button class="tool-btn active" onclick="setTool('brush', this)">✏️</button>
+                    <button class="tool-btn" onclick="setTool('eraser', this)">🧽</button>
+                </div>
+
+                <input type="range" id="brush-size" min="2" max="30" value="5" style="width: 120px;">
                 
-                <input type="range" id="brush-size" min="2" max="30" value="5" style="width: 150px;">
-                <button onclick="clearCanvas()" style="width: auto; background: #dc3545;">Rensa</button>
+                <button onclick="clearCanvas()" class="tool-btn">🗑️</button>
             </div>
-            
-            <button onclick="submitDrawing()" id="btn-done" style="background: #28a745; font-size: 1.2em;">
-                ✅ Jag är färdig!
+
+            <button onclick="submitDrawing()" id="btn-submit">
+                Jag är klar! ✅
             </button>
         </div>
 
         <!-- RESULTS -->
         <div id="screen-results" class="screen">
-            <h2 style="text-align: center; margin-bottom: 30px;">🎨 Alla mästerverk!</h2>
-            <div class="gallery" id="gallery"></div>
-            <button onclick="location.reload()" style="margin-top: 30px; background: #6c757d;">Spela igen</button>
+            <h2 style="text-align: center; margin-bottom: 30px;">🎉 Resultat</h2>
+            <div class="gallery" id="results-gallery"></div>
+            <button onclick="location.reload()" class="secondary" style="margin-top: 30px;">
+                Spela igen
+            </button>
         </div>
     </div>
 
-    <!-- QRCode.js för QR-koder -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
     <script>
-        // ==========================================
-        // SPELSTATE
-        // ==========================================
-        const GAME = {
+        // Game State
+        const STATE = {
+            peer: null,
             myId: null,
+            roomCode: null,
             isHost: false,
             playerName: '',
             players: [],
-            connections: [], // Array av SimplePeer-anslutningar
-            word: '',
-            drawings: [],
+            connections: new Map(),
+            gameState: 'menu',
+            currentWord: '',
+            drawings: new Map(),
             timer: null,
+            timeLeft: 60,
             canvas: null,
             ctx: null,
             isDrawing: false,
+            currentTool: 'brush',
             currentColor: '#000000'
         };
 
-        // ==========================================
-        // WEBTORRENT SIGNALING (Ingen server behövs!)
-        // ==========================================
-        
-        // Vi använder WebTorrents DHT för att annonsera vår existens
-        // och utbyta WebRTC-offers/answers helt P2P
-        
-        let wt = null;
-        
-        function initWebTorrent() {
-            wt = new WebTorrent();
-            console.log('WebTorrent startad');
+        const WORDS = [
+            'katt', 'hund', 'enhörning', 'robot', 'pizza', 'raket',
+            'dinosaurie', 'pirat', 'ninja', 'tårta', 'groda', 'astronaut'
+        ];
+
+        // Navigation
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
         }
 
-        // Generera unikt ID baserat på timestamp + random
-        function generateId() {
-            return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
-        }
-
-        // ==========================================
-        // HÄR ÄR DEN SMARTA LÖSNINGEN: 
-        // Vi använder "offer/answer" utbyte via clipboard/DOM
-        // ==========================================
-
+        // Room Management
         function createRoom() {
-            GAME.playerName = document.getElementById('player-name').value.trim();
-            if (!GAME.playerName) {
+            STATE.playerName = document.getElementById('player-name').value.trim();
+            if (!STATE.playerName) {
                 alert('Skriv ditt namn!');
                 return;
             }
 
-            GAME.isHost = true;
-            GAME.myId = generateId();
-            
-            showScreen('screen-lobby-host');
-            updateHostStatus('Förbereder anslutning...', 'connecting');
+            STATE.isHost = true;
 
-            // Skapa WebRTC offer
-            createHostPeer();
-        }
-
-        function createHostPeer() {
-            const peer = new SimplePeer({
-                initiator: true,
-                trickle: false
+            // Initialize PeerJS
+            STATE.peer = new Peer({
+                host: '0.peerjs.com',
+                port: 443,
+                secure: true
             });
 
-            peer.on('signal', (data) => {
-                // Detta är vår "anslutningskod" - WebRTC offer
-                const token = btoa(JSON.stringify(data));
-                GAME.myToken = token;
+            STATE.peer.on('open', (id) => {
+                STATE.myId = id;
+                STATE.roomCode = id.substring(0, 6).toUpperCase();
                 
-                // Visa för användaren
-                document.getElementById('room-code').textContent = token.substring(0, 20) + '...';
-                document.getElementById('peer-id-text').textContent = 'ID: ' + GAME.myId;
+                // Add self to players
+                STATE.players = [{
+                    id: id,
+                    name: STATE.playerName,
+                    isHost: true
+                }];
+
+                showLobby();
+                setupHostListeners();
+            });
+
+            STATE.peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                alert('Kunde inte skapa rum. Försök igen.');
+            });
+        }
+
+        function setupHostListeners() {
+            STATE.peer.on('connection', (conn) => {
+                console.log('New connection:', conn.peer);
                 
-                // Generera QR-kod
-                new QRCode(document.getElementById('qr-code'), {
-                    text: token,
-                    width: 200,
-                    height: 200
+                conn.on('open', () => {
+                    STATE.connections.set(conn.peer, conn);
+                    
+                    // Handle incoming data
+                    conn.on('data', (data) => handleData(data, conn));
+                    
+                    // Send current players to new connection
+                    conn.send({
+                        type: 'init',
+                        players: STATE.players,
+                        roomCode: STATE.roomCode
+                    });
                 });
 
-                updateHostStatus('✅ Klar! Skicka koden till vänner.', 'connected');
-                
-                // Spara fullständig kod för kopiering
-                GAME.fullToken = token;
-            });
-
-            peer.on('connect', () => {
-                console.log('Client ansluten!');
-                handlePeerConnect(peer);
-            });
-
-            peer.on('data', (data) => handleData(data, peer));
-            
-            GAME.hostPeer = peer;
-        }
-
-        function copyCode() {
-            navigator.clipboard.writeText(GAME.fullToken).then(() => {
-                alert('✅ Anslutningskod kopierad! Klistra in den till dina vänner.');
+                conn.on('close', () => {
+                    removePlayer(conn.peer);
+                });
             });
         }
 
         function joinRoom() {
-            GAME.playerName = document.getElementById('player-name').value.trim();
-            const token = document.getElementById('join-token').value.trim();
+            STATE.playerName = document.getElementById('player-name').value.trim();
+            const code = document.getElementById('join-code').value.trim();
             
-            if (!GAME.playerName) {
-                alert('Gå tillbaka och skriv ditt namn först!');
-                return;
-            }
-            if (!token) {
-                alert('Klistra in anslutningskoden!');
-                return;
-            }
-
-            GAME.isHost = false;
-            showScreen('screen-lobby-client');
-            updateClientStatus('Förbereder anslutning...', 'connecting');
-
-            try {
-                const offer = JSON.parse(atob(token));
-                
-                const peer = new SimplePeer({
-                    initiator: false,
-                    trickle: false
-                });
-
-                peer.on('signal', (data) => {
-                    // Detta är vårt svar - vi behöver skicka tillbaka till host
-                    // MEN eftersom vi inte har server, använder vi en workaround:
-                    // Vi visar svaret för användaren som måste skicka tillbaka manuellt
-                    
-                    const answerToken = btoa(JSON.stringify(data));
-                    
-                    // För enkelhet: Automatisk återanslutning via localStorage-hack
-                    // eller vi använder en "reverse" kanal
-                    
-                    // FÖRENKLAT: Vi försöker ansluta direkt om host är på samma nätverk
-                    console.log('Signal data:', data);
-                });
-
-                peer.signal(offer);
-
-                peer.on('connect', () => {
-                    console.log('Ansluten till host!');
-                    handlePeerConnect(peer);
-                    updateClientStatus('✅ Ansluten! Väntar på spelet...', 'connected');
-                });
-
-                peer.on('data', (data) => handleData(data, peer));
-                peer.on('error', (err) => {
-                    console.error('Peer error:', err);
-                    updateClientStatus('❌ Fel: ' + err.message, 'error');
-                });
-
-            } catch (e) {
-                alert('Ogiltig anslutningskod! Kontrollera att du klistrat in hela koden.');
-                console.error(e);
-            }
-        }
-
-        // ==========================================
-        // FÖRENKLAD LÖSNING: Lokalt nätverk discovery
-        // ==========================================
-
-        // Eftersom WebRTC signaling är svårt utan server, 
-        // erbjuder jag en ALTERNATIV lösning som fungerar 100%:
-
-        // LÖSNING: Använd "Room Code" som seed för att hitta varandra
-        // via WebTorrents magnet-länkar!
-
-        function createRoomV2() {
-            GAME.playerName = document.getElementById('player-name').value.trim();
-            if (!GAME.playerName) {
-                alert('Skriv ditt namn!');
-                return;
-            }
-
-            GAME.isHost = true;
-            GAME.roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-            
-            showScreen('screen-lobby-host');
-            
-            // Skapa en "torrent" som signaleringskanal
-            // Detta är en dummy-fil som bara används för DHT-annonsering
-            const seed = GAME.roomCode + '-gartic-phone-' + Date.now();
-            
-            document.getElementById('room-code').textContent = GAME.roomCode;
-            
-            // I en full implementation skulle vi:
-            // 1. Skapa en magnet-länk från roomCode
-            // 2. Annonsera på DHT
-            // 3. Vänner söker efter samma magnet-länk
-            // 4. När vi hittar varandra, utbyta WebRTC data via WebTorrents data-kanaler
-            
-            updateHostStatus('🌐 Annonserar på P2P-nätverket...', 'connecting');
-            
-            // Simulera att vi väntar på anslutningar
-            // I verkligheten skulle WebTorrent hantera detta
-            
-            setTimeout(() => {
-                updateHostStatus('✅ Rummet är öppet! Dela koden: ' + GAME.roomCode, 'connected');
-                addPlayer({id: 'host', name: GAME.playerName, isHost: true});
-            }, 1000);
-        }
-
-        // ==========================================
-        // PRACTICAL WORKING SOLUTION
-        // ==========================================
-
-        // Eftersom ren P2P utan server är komplext, 
-        // här är en fungerande lösning med **manuell signaling**:
-
-        /*
-        FLÖDE:
-        1. Host skapar WebRTC offer
-        2. Host kopierar offer-koden (lång sträng)
-        3. Host skickar till vän (WhatsApp/Discord)
-        4. Vän klistrar in offer, skapar answer
-        5. Vän kopierar answer-koden
-        6. Vän skickar tillbaka till host
-        7. Host klistrar in answer
-        8. Anslutning etablerad!
-        */
-
-        let pendingPeers = new Map();
-
-        function createRoom() {
-            GAME.playerName = document.getElementById('player-name').value.trim();
-            if (!GAME.playerName) {
-                alert('Skriv ditt namn!');
-                return;
-            }
-
-            GAME.isHost = true;
-            GAME.myId = 'host-' + Date.now();
-            
-            showScreen('screen-lobby-host');
-            
-            // Första steget: Vänta på att någon ska ge oss deras offer
-            // Vi simulerar detta med en "mottagare" för now
-            
-            updateHostStatus('🔄 Steg 1: Väntar på att vänner ska skicka sina offers...', 'connecting');
-            
-            // I verkligheten: Host skulle skapa ett offer och vänta
-            // Men för att förenkla, låt oss göra en "hybrid" lösning
-            
-            setupManualSignalingHost();
-        }
-
-        function setupManualSignalingHost() {
-            // Skapa ett erbjudande (offer)
-            const peer = new SimplePeer({
-                initiator: true,
-                trickle: false
-            });
-
-            peer.on('signal', (data) => {
-                if (data.type === 'offer') {
-                    const offerStr = btoa(JSON.stringify(data));
-                    GAME.currentOffer = offerStr;
-                    
-                    // Visa för host
-                    document.getElementById('room-code').textContent = 'OFFER';
-                    document.getElementById('room-code').onclick = () => {
-                        navigator.clipboard.writeText(offerStr);
-                        alert('Offer kopierat! Skicka till vän.\n\n(Längd: ' + offerStr.length + ' tecken)');
-                    };
-                    
-                    updateHostStatus('📋 Klicka på knappen ovan för att kopiera "OFFER" och skicka till vän', 'connected');
-                    
-                    // Visa instruktioner
-                    document.querySelector('.code-box').innerHTML += `
-                        <div style="margin-top: 20px; font-size: 0.9em; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 5px;">
-                            <p><strong>Instruktioner:</strong></p>
-                            <p>1. Klicka på OFFER ovan för att kopiera</p>
-                            <p>2. Skicka till din vän (WhatsApp/Discord)</p>
-                            <p>3. Be vänner klistra in det och skicka tillbaka deras "ANSWER"</p>
-                            <p>4. Klistra in deras answer här:</p>
-                        </div>
-                        <textarea id="paste-answer" placeholder="Klistra in ANSWER här..." style="width: 100%; margin-top: 10px; font-family: monospace; font-size: 12px;" rows="4"></textarea>
-                        <button onclick="processAnswer()" style="margin-top: 10px;">Anslut</button>
-                    `;
-                }
-            });
-
-            peer.on('connect', () => {
-                console.log('Ansluten!');
-                handlePeerConnect(peer);
-            });
-
-            peer.on('data', (data) => handleData(data, peer));
-
-            GAME.hostPeer = peer;
-        }
-
-        function processAnswer() {
-            const answerStr = document.getElementById('paste-answer').value.trim();
-            if (!answerStr) return;
-            
-            try {
-                const answer = JSON.parse(atob(answerStr));
-                GAME.hostPeer.signal(answer);
-                updateHostStatus('✅ Ansluter...', 'connecting');
-            } catch (e) {
-                alert('Ogiltig answer-kod!');
-            }
-        }
-
-        function joinRoom() {
-            GAME.playerName = document.getElementById('player-name').value.trim();
-            const offerStr = document.getElementById('join-token').value.trim();
-            
-            if (!GAME.playerName) {
+            if (!STATE.playerName) {
                 alert('Skriv ditt namn först!');
                 return;
             }
-            if (!offerStr) {
-                alert('Klistra in offer-koden från host!');
+            if (!code) {
+                alert('Skriv rumskoden!');
                 return;
             }
 
-            GAME.isHost = false;
-            showScreen('screen-lobby-client');
-            updateClientStatus('Skapar svar...', 'connecting');
+            STATE.isHost = false;
 
-            try {
-                const offer = JSON.parse(atob(offerStr));
+            STATE.peer = new Peer({
+                host: '0.peerjs.com',
+                port: 443,
+                secure: true
+            });
+
+            STATE.peer.on('open', (id) => {
+                STATE.myId = id;
                 
-                const peer = new SimplePeer({
-                    initiator: false,
-                    trickle: false
+                // Connect to host
+                const conn = STATE.peer.connect(code, {
+                    reliable: true
                 });
 
-                peer.on('signal', (data) => {
-                    if (data.type === 'answer') {
-                        const answerStr = btoa(JSON.stringify(data));
-                        
-                        // Visa answer för användaren
-                        updateClientStatus('📋 Kopiera din ANSWER och skicka tillbaka till host!', 'connected');
-                        
-                        document.getElementById('screen-lobby-client').innerHTML += `
-                            <div style="margin-top: 20px;">
-                                <textarea id="my-answer" readonly style="width: 100%; font-family: monospace; font-size: 12px;" rows="4">${answerStr}</textarea>
-                                <button onclick="copyAnswer()" style="margin-top: 10px;">Kopiera ANSWER</button>
-                                <p style="margin-top: 10px; font-size: 0.9em;">Skicka denna kod tillbaka till host!</p>
-                            </div>
-                        `;
-                    }
+                conn.on('open', () => {
+                    STATE.connections.set(code, conn);
+                    conn.on('data', (data) => handleData(data, conn));
+                    
+                    // Join as player
+                    conn.send({
+                        type: 'join',
+                        playerId: id,
+                        playerName: STATE.playerName
+                    });
                 });
 
-                peer.signal(offer);
-
-                peer.on('connect', () => {
-                    updateClientStatus('✅ Ansluten till host! Väntar på spelet...', 'connected');
-                    handlePeerConnect(peer);
+                conn.on('error', (err) => {
+                    console.error('Connection error:', err);
+                    alert('Kunde inte ansluta till rummet. Kontrollera koden.');
                 });
-
-                peer.on('data', (data) => handleData(data, peer));
-                peer.on('error', (err) => {
-                    updateClientStatus('❌ Fel: ' + err.message, 'error');
-                });
-
-                GAME.clientPeer = peer;
-
-            } catch (e) {
-                console.error(e);
-                alert('Ogiltig offer-kod! Kontrollera att du klistrat in hela koden.');
-            }
-        }
-
-        function copyAnswer() {
-            const answer = document.getElementById('my-answer').value;
-            navigator.clipboard.writeText(answer).then(() => {
-                alert('Answer kopierat! Skicka till host nu.');
             });
         }
 
-        // ==========================================
-        // GEMENSAMMA FUNKTIONER
-        // ==========================================
+        function handleData(data, conn) {
+            console.log('Received:', data);
 
-        function handlePeerConnect(peer) {
-            if (!GAME.players.find(p => p.id === peer._id)) {
-                GAME.players.push({
-                    id: peer._id || 'peer-' + Date.now(),
-                    name: GAME.isHost ? 'Vän' : GAME.playerName,
-                    isHost: !GAME.isHost
-                });
-            }
-            updatePlayerLists();
-        }
+            switch(data.type) {
+                case 'init':
+                    // Client received initial data
+                    STATE.players = data.players;
+                    STATE.roomCode = data.roomCode;
+                    showLobby();
+                    updateStatus('Ansluten! Väntar på att spelet ska starta...');
+                    break;
 
-        function handleData(data, peer) {
-            const msg = JSON.parse(data.toString());
-            console.log('Mottog:', msg);
-            
-            switch(msg.type) {
                 case 'join':
-                    // Host får vetskap om ny spelare
-                    if (GAME.isHost) {
-                        GAME.players.push({
-                            id: msg.playerId,
-                            name: msg.playerName,
+                    // Host received new player
+                    if (STATE.isHost) {
+                        const newPlayer = {
+                            id: data.playerId,
+                            name: data.playerName,
                             isHost: false
-                        });
-                        updatePlayerLists();
+                        };
+                        STATE.players.push(newPlayer);
+                        updatePlayersList();
                         
-                        // Skicka bekräftelse
-                        peer.send(JSON.stringify({
-                            type: 'welcome',
-                            players: GAME.players
-                        }));
+                        // Broadcast to all connections
+                        broadcast({
+                            type: 'player-joined',
+                            player: newPlayer
+                        }, data.playerId);
+                        
+                        updateStatus(`${data.playerName} gick med!`);
                     }
                     break;
-                    
-                case 'welcome':
-                    GAME.players = msg.players;
-                    updatePlayerLists();
+
+                case 'player-joined':
+                    STATE.players.push(data.player);
+                    updatePlayersList();
                     break;
-                    
-                case 'start-game':
-                    startGameLocal(msg.word);
+
+                case 'game-start':
+                    startGameLocal(data.word);
                     break;
-                    
+
                 case 'drawing':
-                    GAME.drawings.push({
-                        playerId: msg.playerId,
-                        playerName: msg.playerName,
-                        imageData: msg.imageData
-                    });
-                    checkAllDrawings();
+                    if (STATE.isHost) {
+                        STATE.drawings.set(data.playerId, {
+                            playerId: data.playerId,
+                            playerName: data.playerName,
+                            imageData: data.imageData
+                        });
+                        checkAllSubmitted();
+                    }
+                    break;
+
+                case 'game-end':
+                    showResults(data.drawings);
                     break;
             }
         }
 
-        function updatePlayerLists() {
-            const listHtml = GAME.players.map(p => `
-                <div class="player ${p.isHost ? 'host' : ''} ${p.id === GAME.myId ? 'you' : ''}">
-                    <div style="font-size: 2em;">${p.isHost ? '👑' : '🎨'}</div>
-                    <div style="font-weight: bold;">${p.name}</div>
+        function broadcast(data, excludeId = null) {
+            STATE.connections.forEach((conn, id) => {
+                if (id !== excludeId && conn.open) {
+                    conn.send(data);
+                }
+            });
+        }
+
+        function removePlayer(peerId) {
+            STATE.players = STATE.players.filter(p => p.id !== peerId);
+            STATE.connections.delete(peerId);
+            updatePlayersList();
+        }
+
+        // UI Updates
+        function showLobby() {
+            showScreen('screen-lobby');
+            document.getElementById('room-code').textContent = STATE.roomCode;
+            
+            // Generate QR
+            document.getElementById('qrcode').innerHTML = '';
+            new QRCode(document.getElementById('qrcode'), {
+                text: STATE.roomCode,
+                width: 150,
+                height: 150
+            });
+
+            updatePlayersList();
+
+            if (STATE.isHost) {
+                document.getElementById('btn-start').classList.remove('hidden');
+            }
+        }
+
+        function updatePlayersList() {
+            const container = document.getElementById('players-list');
+            container.innerHTML = STATE.players.map(p => `
+                <div class="player-card ${p.isHost ? 'host' : ''} ${p.id === STATE.myId ? 'you' : ''}">
+                    <div class="avatar">${p.isHost ? '👑' : '🎨'}</div>
+                    <div style="font-weight: 600;">${p.name}</div>
+                    ${p.id === STATE.myId ? '<div style="font-size: 0.8rem; color: var(--primary);">Du</div>' : ''}
                 </div>
             `).join('');
-            
-            const hostList = document.getElementById('players-list-host');
-            const clientList = document.getElementById('players-list-client');
-            
-            if (hostList) hostList.innerHTML = listHtml;
-            if (clientList) clientList.innerHTML = listHtml;
-            
-            // Uppdatera start-knapp
-            if (GAME.isHost) {
+
+            // Update start button
+            if (STATE.isHost) {
                 const btn = document.getElementById('btn-start');
-                if (btn) {
-                    if (GAME.players.length >= 2) {
-                        btn.disabled = false;
-                        btn.textContent = `Starta spelet! (${GAME.players.length} spelare)`;
-                    } else {
-                        btn.disabled = true;
-                        btn.textContent = 'Väntar på fler spelare...';
-                    }
+                if (STATE.players.length >= 2) {
+                    btn.disabled = false;
+                    btn.textContent = `Starta spelet (${STATE.players.length} spelare)`;
+                } else {
+                    btn.disabled = true;
+                    btn.textContent = 'Väntar på fler spelare...';
                 }
             }
         }
 
-        function updateHostStatus(text, type) {
-            const el = document.getElementById('host-status');
-            if (el) {
-                el.textContent = text;
-                el.className = 'status ' + type;
-            }
+        function updateStatus(msg) {
+            document.getElementById('lobby-status').textContent = msg;
         }
 
-        function updateClientStatus(text, type) {
-            const el = document.getElementById('client-status');
-            if (el) {
-                el.textContent = text;
-                el.className = 'status ' + type;
-            }
-        }
-
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+        function copyRoomCode() {
+            navigator.clipboard.writeText(STATE.roomCode).then(() => {
+                updateStatus('Kod kopierad! Dela med vänner.');
+                setTimeout(() => updateStatus('Väntar på spelare...'), 2000);
+            });
         }
 
         function showJoin() {
-            GAME.playerName = document.getElementById('player-name').value.trim();
-            if (!GAME.playerName) {
+            STATE.playerName = document.getElementById('player-name').value.trim();
+            if (!STATE.playerName) {
                 alert('Skriv ditt namn först!');
                 return;
             }
             showScreen('screen-join');
         }
 
-        // ==========================================
-        // SPEL-LOGIK
-        // ==========================================
-
-        const WORDS = ['katt', 'hund', 'enhörning', 'robot', 'pizza', 'raket', 'dinosaurie', 'pirat', 'ninja', 'tårta'];
-
+        // Game Logic
         function startGame() {
-            if (GAME.players.length < 2) {
+            if (STATE.players.length < 2) {
                 alert('Vänta på fler spelare!');
                 return;
             }
 
-            GAME.word = WORDS[Math.floor(Math.random() * WORDS.length)];
+            STATE.currentWord = WORDS[Math.floor(Math.random() * WORDS.length)];
             
-            // Skicka till alla peers
-            const msg = JSON.stringify({
-                type: 'start-game',
-                word: GAME.word
+            broadcast({
+                type: 'game-start',
+                word: STATE.currentWord
             });
-            
-            if (GAME.hostPeer) GAME.hostPeer.send(msg);
-            GAME.connections.forEach(p => p.send(msg));
-            
-            startGameLocal(GAME.word);
+
+            startGameLocal(STATE.currentWord);
         }
 
         function startGameLocal(word) {
+            STATE.gameState = 'playing';
+            STATE.currentWord = word;
+            
             showScreen('screen-game');
-            document.getElementById('game-word').textContent = 'Rita: ' + word;
+            document.getElementById('game-word').textContent = word;
             
             initCanvas();
             startTimer(60);
         }
 
         function startTimer(seconds) {
-            let timeLeft = seconds;
-            const timerEl = document.getElementById('game-timer');
+            STATE.timeLeft = seconds;
+            updateTimer();
             
-            GAME.timer = setInterval(() => {
-                timerEl.textContent = timeLeft;
-                if (timeLeft <= 10) timerEl.classList.add('urgent');
+            STATE.timer = setInterval(() => {
+                STATE.timeLeft--;
+                updateTimer();
                 
-                timeLeft--;
-                if (timeLeft < 0) {
-                    clearInterval(GAME.timer);
+                if (STATE.timeLeft <= 0) {
+                    clearInterval(STATE.timer);
                     submitDrawing();
                 }
             }, 1000);
         }
 
-        // ==========================================
-        // CANVAS
-        // ==========================================
-
-        function initCanvas() {
-            GAME.canvas = document.getElementById('canvas');
-            GAME.ctx = GAME.canvas.getContext('2d');
-            GAME.ctx.fillStyle = 'white';
-            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
-            GAME.ctx.lineCap = 'round';
-            GAME.ctx.lineJoin = 'round';
+        function updateTimer() {
+            const el = document.getElementById('game-timer');
+            el.textContent = STATE.timeLeft;
             
+            if (STATE.timeLeft <= 10) {
+                el.classList.add('warning');
+            } else {
+                el.classList.remove('warning');
+            }
+        }
+
+        // Canvas
+        function initCanvas() {
+            STATE.canvas = document.getElementById('game-canvas');
+            STATE.ctx = STATE.canvas.getContext('2d');
+            STATE.ctx.fillStyle = 'white';
+            STATE.ctx.fillRect(0, 0, STATE.canvas.width, STATE.canvas.height);
+            STATE.ctx.lineCap = 'round';
+            STATE.ctx.lineJoin = 'round';
+
             // Events
-            GAME.canvas.addEventListener('mousedown', startDraw);
-            GAME.canvas.addEventListener('mousemove', draw);
-            GAME.canvas.addEventListener('mouseup', stopDraw);
-            GAME.canvas.addEventListener('mouseout', stopDraw);
+            STATE.canvas.addEventListener('mousedown', startDraw);
+            STATE.canvas.addEventListener('mousemove', draw);
+            STATE.canvas.addEventListener('mouseup', stopDraw);
+            STATE.canvas.addEventListener('mouseout', stopDraw);
             
             // Touch
-            GAME.canvas.addEventListener('touchstart', handleTouch);
-            GAME.canvas.addEventListener('touchmove', handleTouch);
-            GAME.canvas.addEventListener('touchend', stopDraw);
+            STATE.canvas.addEventListener('touchstart', handleTouch, {passive: false});
+            STATE.canvas.addEventListener('touchmove', handleTouch, {passive: false});
+            STATE.canvas.addEventListener('touchend', stopDraw);
         }
 
         function getPos(e) {
-            const rect = GAME.canvas.getBoundingClientRect();
+            const rect = STATE.canvas.getBoundingClientRect();
             const clientX = e.clientX || (e.touches && e.touches[0].clientX);
             const clientY = e.clientY || (e.touches && e.touches[0].clientY);
             return {
-                x: clientX - rect.left,
-                y: clientY - rect.top
+                x: (clientX - rect.left) * (STATE.canvas.width / rect.width),
+                y: (clientY - rect.top) * (STATE.canvas.height / rect.height)
             };
         }
 
         function startDraw(e) {
-            GAME.isDrawing = true;
+            STATE.isDrawing = true;
             const pos = getPos(e);
-            GAME.ctx.beginPath();
-            GAME.ctx.moveTo(pos.x, pos.y);
+            STATE.ctx.beginPath();
+            STATE.ctx.moveTo(pos.x, pos.y);
         }
 
         function draw(e) {
-            if (!GAME.isDrawing) return;
+            if (!STATE.isDrawing) return;
             const pos = getPos(e);
-            GAME.ctx.lineWidth = document.getElementById('brush-size').value;
-            GAME.ctx.strokeStyle = GAME.currentColor;
-            GAME.ctx.lineTo(pos.x, pos.y);
-            GAME.ctx.stroke();
+            
+            STATE.ctx.lineWidth = document.getElementById('brush-size').value;
+            STATE.ctx.strokeStyle = STATE.currentTool === 'eraser' ? '#ffffff' : STATE.currentColor;
+            STATE.ctx.lineTo(pos.x, pos.y);
+            STATE.ctx.stroke();
         }
 
         function stopDraw() {
-            GAME.isDrawing = false;
+            STATE.isDrawing = false;
         }
 
         function handleTouch(e) {
             e.preventDefault();
             const touch = e.touches[0];
-            const evt = { clientX: touch.clientX, clientY: touch.clientY };
+            const evt = {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            };
             if (e.type === 'touchstart') startDraw(evt);
             else draw(evt);
         }
 
-        function setColor(color) {
-            GAME.currentColor = color;
+        function setColor(btn) {
+            STATE.currentColor = btn.dataset.color;
+            STATE.currentTool = 'brush';
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            btn.classList.add('active');
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.tool-btn:first-child').classList.add('active');
+        }
+
+        function setTool(tool, btn) {
+            STATE.currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
         }
 
         function clearCanvas() {
-            GAME.ctx.fillStyle = 'white';
-            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
+            STATE.ctx.fillStyle = 'white';
+            STATE.ctx.fillRect(0, 0, STATE.canvas.width, STATE.canvas.height);
         }
 
         function submitDrawing() {
-            clearInterval(GAME.timer);
-            document.getElementById('btn-done').disabled = true;
-            document.getElementById('btn-done').textContent = 'Väntar på andra...';
-            
-            const imageData = GAME.canvas.toDataURL();
-            
-            const msg = JSON.stringify({
-                type: 'drawing',
-                playerId: GAME.myId,
-                playerName: GAME.playerName,
-                imageData: imageData
-            });
-            
-            if (GAME.isHost && GAME.hostPeer) {
-                GAME.drawings.push({
-                    playerId: GAME.myId,
-                    playerName: GAME.playerName + ' (Host)',
+            clearInterval(STATE.timer);
+            document.getElementById('btn-submit').disabled = true;
+            document.getElementById('btn-submit').textContent = 'Väntar på andra...';
+
+            const imageData = STATE.canvas.toDataURL();
+
+            if (STATE.isHost) {
+                STATE.drawings.set(STATE.myId, {
+                    playerId: STATE.myId,
+                    playerName: STATE.playerName,
                     imageData: imageData
                 });
-                checkAllDrawings();
-            } else if (GAME.clientPeer) {
-                GAME.clientPeer.send(msg);
+                checkAllSubmitted();
+            } else {
+                // Send to host
+                const hostConn = Array.from(STATE.connections.values())[0];
+                if (hostConn) {
+                    hostConn.send({
+                        type: 'drawing',
+                        playerId: STATE.myId,
+                        playerName: STATE.playerName,
+                        imageData: imageData
+                    });
+                }
             }
         }
 
-        function checkAllDrawings() {
-            // Host väntar på alla
-            if (GAME.isHost && GAME.drawings.length >= GAME.players.length - 1) {
-                // + host egen ritning
-                showResults();
+        function checkAllSubmitted() {
+            if (STATE.drawings.size >= STATE.players.length) {
+                // All submitted
+                const drawingsArray = Array.from(STATE.drawings.values());
+                
+                broadcast({
+                    type: 'game-end',
+                    drawings: drawingsArray
+                });
+
+                showResults(drawingsArray);
             }
         }
 
-        function showResults() {
+        function showResults(drawings) {
             showScreen('screen-results');
             
-            const gallery = document.getElementById('gallery');
-            gallery.innerHTML = GAME.drawings.map(d => `
-                <div class="art-piece">
-                    <img src="${d.imageData}">
+            const gallery = document.getElementById('results-gallery');
+            gallery.innerHTML = drawings.map(d => `
+                <div class="art-card">
+                    <img src="${d.imageData}" alt="Ritning">
                     <div class="info">
-                        <h3>${d.playerName}</h3>
-                        <p style="color: #764ba2;">${GAME.word}</p>
+                        <div class="artist">${d.playerName}</div>
+                        <div class="word">${STATE.currentWord}</div>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Starta
-        console.log('Gartic Phone P2P laddad');
+        console.log('Gartic Phone loaded');
     </script>
 </body>
 </html>
