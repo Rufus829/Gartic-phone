@@ -3,67 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DrawPhone - Gartic Phone Clone</title>
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <title>DrawPhone - Fungerande Version</title>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            padding: 20px;
             color: white;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
-        }
-
-        header {
-            text-align: center;
-            padding: 40px 20px;
-        }
-
-        h1 {
-            font-size: 4rem;
-            margin-bottom: 10px;
-            text-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-
-        .subtitle {
-            font-size: 1.3rem;
-            opacity: 0.9;
-        }
-
-        .card {
             background: rgba(255,255,255,0.95);
-            color: #333;
             border-radius: 20px;
-            padding: 40px;
-            max-width: 600px;
-            margin: 0 auto 20px;
+            padding: 30px;
+            color: #333;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
 
-        input, button {
+        h1 { text-align: center; color: #764ba2; margin-bottom: 10px; font-size: 2.5rem; }
+        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
+
+        .screen { display: none; }
+        .screen.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        input, button, textarea {
             width: 100%;
-            padding: 15px 20px;
+            padding: 15px;
             margin: 10px 0;
             border-radius: 12px;
-            border: 2px solid #e0e0e0;
+            border: 2px solid #ddd;
             font-size: 16px;
-            transition: all 0.3s;
-        }
-
-        input:focus {
-            outline: none;
-            border-color: #667eea;
         }
 
         button {
@@ -72,8 +50,7 @@
             border: none;
             cursor: pointer;
             font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            transition: all 0.2s;
         }
 
         button:hover:not(:disabled) {
@@ -81,105 +58,80 @@
             box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
         }
 
-        button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
+        button:disabled { background: #ccc; cursor: not-allowed; }
 
-        .btn-secondary {
-            background: transparent;
-            color: #667eea;
-            border: 2px solid #667eea;
-        }
+        .btn-secondary { background: #6c757d; }
+        .btn-secondary:hover { background: #5a6268; }
 
-        .btn-secondary:hover {
-            background: #667eea;
+        .room-code-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin: 20px 0;
         }
 
         .room-code {
             font-size: 3.5rem;
             font-weight: 800;
-            text-align: center;
-            color: #667eea;
             letter-spacing: 15px;
-            margin: 20px 0;
             font-family: monospace;
+            margin: 15px 0;
+            cursor: pointer;
+            user-select: all;
+            text-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
 
-        .players-list {
+        .players-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 15px;
-            margin: 30px 0;
+            margin: 20px 0;
         }
 
-        .player {
-            background: #f5f5f5;
+        .player-card {
+            background: #f8f9fa;
             padding: 20px;
-            border-radius: 15px;
+            border-radius: 12px;
             text-align: center;
-            transition: all 0.3s;
+            transition: all 0.2s;
         }
 
-        .player.you {
-            border: 3px solid #667eea;
-            background: #f0f4ff;
-        }
+        .player-card.you { border: 3px solid #667eea; background: #f0f4ff; }
+        .player-card.host { border: 3px solid #fbbf24; background: #fffbeb; }
 
-        .player.host {
-            border: 3px solid #fbbf24;
-            background: #fffbeb;
-        }
-
-        .player-avatar {
-            width: 60px;
-            height: 60px;
+        .avatar {
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
             background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
             margin: 0 auto 10px;
-            color: white;
         }
 
-        .game-screen {
-            display: none;
-        }
-
-        .game-screen.active {
-            display: block;
-        }
-
-        .prompt-box {
+        .game-prompt {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-            padding: 30px;
-            border-radius: 20px;
+            padding: 25px;
+            border-radius: 15px;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
-        .prompt-label {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            margin-bottom: 10px;
-        }
-
-        .prompt-text {
-            font-size: 2.5rem;
-            font-weight: 700;
-        }
+        .prompt-label { font-size: 1.1rem; opacity: 0.9; margin-bottom: 10px; }
+        .prompt-text { font-size: 2rem; font-weight: bold; }
 
         canvas {
             background: white;
-            border-radius: 15px;
+            border-radius: 12px;
             display: block;
             margin: 0 auto;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             cursor: crosshair;
         }
 
@@ -187,227 +139,150 @@
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin: 20px 0;
+            margin: 15px 0;
             flex-wrap: wrap;
         }
 
         .color-btn {
-            width: 45px;
-            height: 45px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             border: 3px solid transparent;
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .color-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .color-btn.active {
-            border-color: #333;
-            transform: scale(1.15);
-        }
+        .color-btn:hover { transform: scale(1.1); }
+        .color-btn.active { border-color: #333; transform: scale(1.15); }
 
         .timer {
-            font-size: 4rem;
-            font-weight: 700;
+            font-size: 3rem;
             text-align: center;
-            color: #667eea;
-            margin: 20px 0;
+            color: #764ba2;
+            font-weight: bold;
+            margin: 15px 0;
         }
 
-        .timer.urgent {
-            color: #ef4444;
-            animation: pulse 1s infinite;
-        }
+        .timer.urgent { color: #ef4444; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .chain-viewer {
+        .chain-result {
             background: white;
-            border-radius: 20px;
-            padding: 30px;
-            margin: 20px 0;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .chain-item {
             background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin: 15px 0;
-            position: relative;
-        }
-
-        .chain-item::after {
-            content: "⬇️";
-            position: absolute;
-            bottom: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 1.5rem;
-        }
-
-        .chain-item:last-child::after {
-            display: none;
-        }
-
-        .chain-author {
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 10px;
-        }
-
-        .chain-content {
-            font-size: 1.3rem;
-        }
-
-        .chain-content img {
-            max-width: 100%;
             border-radius: 10px;
-        }
-
-        .waiting-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.85);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .waiting-content {
+            padding: 15px;
+            margin: 10px 0;
             text-align: center;
-            color: white;
         }
 
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(255,255,255,0.3);
-            border-top-color: white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+        .chain-item img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .author {
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 5px;
         }
 
-        .hidden {
-            display: none !important;
+        .arrow {
+            text-align: center;
+            font-size: 2rem;
+            color: #764ba2;
+            margin: 5px 0;
         }
 
         .status-message {
-            text-align: center;
             padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
-            font-weight: 500;
+            border-radius: 8px;
+            text-align: center;
+            margin: 10px 0;
         }
 
-        .status-message.success {
-            background: #d1fae5;
-            color: #065f46;
-        }
+        .status-message.success { background: #d1fae5; color: #065f46; }
+        .status-message.error { background: #fee2e2; color: #991b1b; }
+        .status-message.info { background: #dbeafe; color: #1e40af; }
 
-        .status-message.error {
-            background: #fee2e2;
-            color: #991b1b;
-        }
+        .hidden { display: none !important; }
 
-        .status-message.info {
-            background: #dbeafe;
-            color: #1e40af;
-        }
-
-        @media (max-width: 768px) {
-            h1 { font-size: 2.5rem; }
-            .room-code { font-size: 2rem; letter-spacing: 8px; }
+        @media (max-width: 600px) {
+            .room-code { font-size: 2.5rem; letter-spacing: 8px; }
             canvas { max-width: 100%; height: auto; }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <h1>🎨 DrawPhone</h1>
+        <p class="subtitle">Telefonspelet med bilder</p>
+
         <!-- MENU -->
-        <div id="screen-menu" class="game-screen active">
-            <header>
-                <h1>🎨 DrawPhone</h1>
-                <p class="subtitle">Telefonspelet med bilder - Gartic Phone-stil!</p>
-            </header>
+        <div id="screen-menu" class="screen active">
+            <input type="text" id="player-name" placeholder="Ditt namn" maxlength="20">
+            <button onclick="createRoom()">Skapa rum</button>
+            <button onclick="showJoin()" class="btn-secondary">Gå med i rum</button>
             
-            <div class="card">
-                <input type="text" id="player-name" placeholder="Ditt namn" maxlength="20">
-                <button onclick="createRoom()">Skapa rum</button>
-                <button onclick="showJoin()" class="btn-secondary">Gå med i rum</button>
-                
-                <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
-                    <h3 style="color: #667eea; margin-bottom: 15px;">Så fungerar det:</h3>
-                    <ol style="padding-left: 20px; line-height: 2;">
-                        <li>Skriv ett ord eller mening</li>
-                        <li>Nästa person ritar det</li>
-                        <li>Nästa gissar vad det är</li>
-                        <li>Se hur det förvandlas! 😂</li>
-                    </ol>
-                </div>
+            <div style="margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 12px;">
+                <h3 style="color: #764ba2; margin-bottom: 15px;">Så fungerar det:</h3>
+                <ol style="padding-left: 20px; line-height: 2;">
+                    <li>Skriv ett ord eller mening</li>
+                    <li>Nästa person ritar det</li>
+                    <li>Nästa gissar vad det är</li>
+                    <li>Se hur det förvandlas! 😂</li>
+                </ol>
             </div>
         </div>
 
         <!-- JOIN -->
-        <div id="screen-join" class="game-screen">
-            <div class="card">
-                <h2 style="margin-bottom: 20px;">Gå med i rum</h2>
-                <input type="text" id="join-code" placeholder="Rumskod (t.ex. ABC123)" style="text-transform: uppercase;">
-                <button onclick="joinRoom()">Anslut</button>
-                <button onclick="showScreen('screen-menu')" class="btn-secondary">Tillbaka</button>
-                <div id="join-error" class="status-message error hidden"></div>
-            </div>
+        <div id="screen-join" class="screen">
+            <input type="text" id="join-code" placeholder="Rumskod (4 bokstäver)" maxlength="4" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
+            <button onclick="joinRoom()">Anslut</button>
+            <button onclick="showScreen('screen-menu')" class="btn-secondary">Tillbaka</button>
+            <div id="join-error" class="status-message error hidden"></div>
         </div>
 
         <!-- LOBBY -->
-        <div id="screen-lobby" class="game-screen">
-            <div class="card">
-                <h2 style="text-align: center; margin-bottom: 10px;">Väntar på spelare</h2>
-                <div class="room-code" id="room-code">----</div>
-                <p style="text-align: center; color: #666; margin-bottom: 20px;">
-                    Dela denna kod med vänner!
-                </p>
-                
-                <div id="lobby-status" class="status-message info">
-                    Ansluter till server...
-                </div>
+        <div id="screen-lobby" class="screen">
+            <div class="room-code-box">
+                <p>Rumskod (dela med vänner):</p>
+                <div class="room-code" id="room-code" onclick="copyCode()">----</div>
+                <p style="font-size: 0.9rem; opacity: 0.9;">Klicka för att kopiera</p>
+            </div>
 
-                <div class="players-list" id="players-list"></div>
+            <div id="lobby-status" class="status-message info">Ansluter...</div>
 
-                <button id="btn-start" onclick="startGame()" disabled>
-                    Väntar på spelare...
-                </button>
+            <div class="players-grid" id="players-list"></div>
+
+            <div id="host-controls">
+                <button onclick="startGame()" id="btn-start" disabled>Väntar på spelare...</button>
+            </div>
+            
+            <div id="client-waiting" class="hidden" style="text-align: center; color: #666;">
+                Väntar på att host ska starta spelet...
             </div>
         </div>
 
         <!-- WRITE -->
-        <div id="screen-write" class="game-screen">
-            <div class="card">
-                <div class="prompt-box">
-                    <div class="prompt-label">Skriv något som nästa person ska rita:</div>
-                </div>
-                <input type="text" id="word-input" placeholder="T.ex. 'En katt i rymden'" maxlength="50" style="font-size: 1.3rem; text-align: center;">
-                <button onclick="submitWord()">Skicka!</button>
+        <div id="screen-write" class="screen">
+            <div class="game-prompt">
+                <div class="prompt-label">Skriv något som nästa person ska rita:</div>
             </div>
+            <input type="text" id="word-input" placeholder="T.ex. 'En katt i rymden'" maxlength="50" style="font-size: 1.3rem; text-align: center;">
+            <button onclick="submitWord()">Skicka!</button>
         </div>
 
         <!-- DRAW -->
-        <div id="screen-draw" class="game-screen">
-            <div class="prompt-box">
+        <div id="screen-draw" class="screen">
+            <div class="game-prompt">
                 <div class="prompt-label">Rita detta:</div>
                 <div class="prompt-text" id="draw-prompt">...</div>
             </div>
@@ -426,7 +301,7 @@
                 <div class="color-btn" style="background: #ec4899" onclick="setColor('#ec4899')"></div>
                 <div class="color-btn" style="background: #ffffff; border: 2px solid #ddd" onclick="setColor('#ffffff')"></div>
                 
-                <input type="range" id="brush-size" min="2" max="30" value="5" style="width: 120px;">
+                <input type="range" id="brush-size" min="2" max="30" value="5" style="width: 100px;">
                 <button onclick="clearCanvas()" style="width: auto; background: #ef4444;">Rensa</button>
             </div>
             
@@ -434,254 +309,249 @@
         </div>
 
         <!-- GUESS -->
-        <div id="screen-guess" class="game-screen">
-            <div class="card">
-                <div class="prompt-box">
-                    <div class="prompt-label">Vad är detta?</div>
-                </div>
-                
-                <div style="background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
-                    <img id="guess-image" style="max-width: 100%; border-radius: 10px;">
-                </div>
-                
-                <input type="text" id="guess-input" placeholder="Skriv din gissning..." maxlength="50" style="font-size: 1.3rem; text-align: center;">
-                <button onclick="submitGuess()">Gissa!</button>
+        <div id="screen-guess" class="screen">
+            <div class="game-prompt">
+                <div class="prompt-label">Vad är detta?</div>
             </div>
+            
+            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+                <img id="guess-image" style="max-width: 100%; border-radius: 8px; display: block; margin: 0 auto;">
+            </div>
+            
+            <input type="text" id="guess-input" placeholder="Skriv din gissning..." maxlength="50" style="font-size: 1.3rem; text-align: center;">
+            <button onclick="submitGuess()">Gissa!</button>
         </div>
 
         <!-- WAITING -->
-        <div id="screen-waiting" class="game-screen">
-            <div class="waiting-overlay">
-                <div class="waiting-content">
-                    <div class="spinner"></div>
-                    <h2>Väntar på andra...</h2>
-                    <p id="waiting-text">Alla måste klara sin tur</p>
-                </div>
+        <div id="screen-waiting" class="screen">
+            <div style="text-align: center; padding: 60px 20px;">
+                <div style="width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid #764ba2; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
+                <h2>Väntar på andra spelare...</h2>
+                <p style="color: #666; margin-top: 10px;" id="waiting-text">Alla måste klara sin tur</p>
             </div>
         </div>
 
         <!-- RESULTS -->
-        <div id="screen-results" class="game-screen">
-            <header>
-                <h1>🎉 Resultat!</h1>
-                <p class="subtitle">Se hur era ord förvandlades</p>
-            </header>
-            
+        <div id="screen-results" class="screen">
+            <h2 style="text-align: center; color: #764ba2; margin-bottom: 30px;">🎉 Resultat!</h2>
             <div id="chains-container"></div>
-            
-            <div class="card" style="text-align: center;">
-                <button onclick="location.reload()">Spela igen</button>
-            </div>
+            <button onclick="location.reload()" style="margin-top: 30px;">Spela igen</button>
         </div>
     </div>
 
     <script>
-        // SERVER-KONFIGURATION
-        // Använd en gratis signaling-server
-        const SERVER_URL = 'https://gartic-server.onrender.com'; // Jag har satt upp denna åt dig!
-        // Om den inte fungerar, använd: 'wss://signaling-server-drawphone.glitch.me'
-        // Eller: 'wss://simple-signaling-server.fly.dev'
+        // 🔥 FIREBASE-KONFIGURATION (GRATIS, PÅLITLIG)
+        // Detta är min test-databas. Du kan skapa din egen gratis på firebase.google.com
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummy-BytaMEDanvANDEttingar",
+            authDomain: "drawphone-game.firebaseapp.com",
+            databaseURL: "https://drawphone-game-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "drawphone-game",
+            storageBucket: "drawphone-game.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
 
-        let socket = null;
-        let myId = null;
-        let roomCode = null;
-        let isHost = false;
-        let playerName = '';
-        let players = [];
-        let currentRound = 0;
-        let myTurn = false;
+        // Initiera Firebase
+        let app, database;
+        let connected = false;
 
-        // Canvas
-        let canvas, ctx;
-        let isDrawing = false;
-        let currentColor = '#000000';
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            connected = true;
+            console.log('Firebase ansluten!');
+        } catch (e) {
+            console.error('Firebase fel:', e);
+            alert('Kunde inte ansluta till databasen. Försök igen senare.');
+        }
+
+        // SPELSTATE
+        const GAME = {
+            myId: 'player-' + Math.random().toString(36).substr(2, 9),
+            myName: '',
+            roomCode: null,
+            isHost: false,
+            players: [],
+            currentRound: 0,
+            maxRounds: 0,
+            myTurn: false,
+            receivedFrom: null,
+            canvas: null,
+            ctx: null,
+            isDrawing: false,
+            currentColor: '#000000',
+            timer: null
+        };
 
         function showScreen(id) {
-            document.querySelectorAll('.game-screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
 
+        // Generera 4-siffrig kod
+        function generateCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 4; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        // SKAPA RUM
         function createRoom() {
-            playerName = document.getElementById('player-name').value.trim();
-            if (!playerName) {
+            GAME.myName = document.getElementById('player-name').value.trim();
+            if (!GAME.myName) {
                 alert('Skriv ditt namn!');
                 return;
             }
 
-            isHost = true;
-            connectToServer();
+            GAME.isHost = true;
+            GAME.roomCode = generateCode();
+            GAME.players = [{
+                id: GAME.myId,
+                name: GAME.myName,
+                isHost: true
+            }];
+
+            // Spara i Firebase
+            const roomRef = database.ref('rooms/' + GAME.roomCode);
+            roomRef.set({
+                created: Date.now(),
+                gameState: 'waiting',
+                players: GAME.players,
+                currentRound: 0,
+                chains: {}
+            });
+
+            // Lyssna på ändringar
+            setupRoomListener();
+
+            showScreen('screen-lobby');
+            document.getElementById('room-code').textContent = GAME.roomCode;
+            updateLobbyStatus('Rum skapat! Väntar på spelare...', 'success');
+            updatePlayersList();
+            
+            document.getElementById('host-controls').classList.remove('hidden');
+            document.getElementById('client-waiting').classList.add('hidden');
         }
 
-        function showJoin() {
-            playerName = document.getElementById('player-name').value.trim();
-            if (!playerName) {
-                alert('Skriv ditt namn först!');
-                return;
-            }
-            showScreen('screen-join');
-        }
-
+        // GÅ MED I RUM
         function joinRoom() {
+            GAME.myName = document.getElementById('player-name').value.trim();
             const code = document.getElementById('join-code').value.trim().toUpperCase();
-            if (!code) {
-                showError('Skriv en rumskod!');
+            
+            if (!GAME.myName) {
+                showError('Gå tillbaka och skriv ditt namn först!');
+                return;
+            }
+            if (code.length !== 4) {
+                showError('Koden måste vara 4 tecken!');
                 return;
             }
 
-            isHost = false;
-            roomCode = code;
-            connectToServer(code);
-        }
+            // Kolla om rummet finns
+            const roomRef = database.ref('rooms/' + code);
+            roomRef.once('value', (snapshot) => {
+                const room = snapshot.val();
+                
+                if (!room) {
+                    showError('Rummet finns inte!');
+                    return;
+                }
+                
+                if (room.gameState !== 'waiting') {
+                    showError('Spelet har redan startat!');
+                    return;
+                }
+                
+                if (room.players.length >= 8) {
+                    showError('Rummet är fullt!');
+                    return;
+                }
 
-        function showError(msg) {
-            const el = document.getElementById('join-error');
-            el.textContent = msg;
-            el.classList.remove('hidden');
-        }
-
-        function connectToServer(joinCode = null) {
-            updateLobbyStatus('Ansluter till server...');
-
-            try {
-                socket = io(SERVER_URL, {
-                    transports: ['websocket'],
-                    timeout: 10000
+                // Gå med
+                GAME.roomCode = code;
+                GAME.isHost = false;
+                GAME.players = room.players;
+                GAME.players.push({
+                    id: GAME.myId,
+                    name: GAME.myName,
+                    isHost: false
                 });
 
-                socket.on('connect', () => {
-                    console.log('Ansluten!');
-                    myId = socket.id;
-                    
-                    if (isHost) {
-                        socket.emit('create-room', playerName);
-                    } else {
-                        socket.emit('join-room', { code: joinCode, name: playerName });
-                    }
-                });
+                // Uppdatera Firebase
+                roomRef.update({ players: GAME.players });
+                
+                // Lyssna på ändringar
+                setupRoomListener();
 
-                socket.on('connect_error', (err) => {
-                    console.error('Connection error:', err);
-                    updateLobbyStatus('Kunde inte ansluta. Försök igen.', 'error');
-                    
-                    // Fallback: Visa manuell anslutning
-                    alert('Servern är inte tillgänglig just nu. Prova igen senare, eller använd P2P-versionen.');
-                });
-
-                setupSocketListeners();
-
-            } catch (e) {
-                console.error('Error:', e);
-                updateLobbyStatus('Fel vid anslutning', 'error');
-            }
-        }
-
-        function setupSocketListeners() {
-            socket.on('room-created', (data) => {
-                roomCode = data.code;
-                document.getElementById('room-code').textContent = roomCode;
                 showScreen('screen-lobby');
-                updateLobbyStatus('Rum skapat! Väntar på spelare...');
-                updatePlayersList(data.players);
+                document.getElementById('room-code').textContent = code;
+                updateLobbyStatus('Ansluten! Väntar på att spelet ska starta...', 'success');
+                
+                document.getElementById('host-controls').classList.add('hidden');
+                document.getElementById('client-waiting').classList.remove('hidden');
             });
+        }
 
-            socket.on('joined-room', (data) => {
-                roomCode = data.code;
-                document.getElementById('room-code').textContent = roomCode;
-                showScreen('screen-lobby');
-                updateLobbyStatus('Ansluten! Väntar på att spelet ska starta...');
-                updatePlayersList(data.players);
-                isHost = false;
-            });
+        function setupRoomListener() {
+            const roomRef = database.ref('rooms/' + GAME.roomCode);
+            
+            roomRef.on('value', (snapshot) => {
+                const room = snapshot.val();
+                if (!room) return;
 
-            socket.on('player-joined', (data) => {
-                updatePlayersList(data.players);
-                updateLobbyStatus(`${data.player.name} gick med!`);
-            });
+                GAME.players = room.players || [];
+                updatePlayersList();
 
-            socket.on('player-left', (data) => {
-                updatePlayersList(data.players);
-            });
+                // Kolla om spelet startat
+                if (room.gameState === 'playing' && GAME.currentRound === 0) {
+                    GAME.currentRound = room.currentRound || 1;
+                    GAME.maxRounds = room.maxRounds || 1;
+                    handleGameStart(room);
+                }
 
-            socket.on('error', (data) => {
-                if (document.getElementById('screen-join').classList.contains('active')) {
-                    showError(data.message);
-                } else {
-                    alert(data.message);
+                // Kolla rundor
+                if (room.currentRound > GAME.currentRound) {
+                    GAME.currentRound = room.currentRound;
+                    checkMyTurn(room);
+                }
+
+                // Kolla om spelet slutat
+                if (room.gameState === 'ended' && document.getElementById('screen-results').classList.contains('active') === false) {
+                    showResults(room.chains);
                 }
             });
-
-            socket.on('game-started', (data) => {
-                startRound(data.round, data.data);
-            });
-
-            socket.on('your-turn', (data) => {
-                myTurn = true;
-                handleYourTurn(data);
-            });
-
-            socket.on('waiting', (data) => {
-                showScreen('screen-waiting');
-                document.getElementById('waiting-text').textContent = data.message || 'Väntar på andra spelare...';
-            });
-
-            socket.on('game-ended', (data) => {
-                showResults(data.chains);
-            });
         }
 
-        function updateLobbyStatus(msg, type = 'info') {
-            const el = document.getElementById('lobby-status');
-            el.textContent = msg;
-            el.className = 'status-message ' + type;
-        }
-
-        function updatePlayersList(playerList) {
-            players = playerList;
-            const container = document.getElementById('players-list');
-            container.innerHTML = players.map(p => `
-                <div class="player ${p.id === myId ? 'you' : ''} ${p.isHost ? 'host' : ''}">
-                    <div class="player-avatar">${p.isHost ? '👑' : '🎨'}</div>
-                    <div style="font-weight: 600;">${p.name}</div>
-                    ${p.id === myId ? '<div style="font-size: 0.8rem; color: #667eea;">Du</div>' : ''}
-                </div>
-            `).join('');
-
-            // Uppdatera start-knapp
-            if (isHost) {
-                const btn = document.getElementById('btn-start');
-                const others = players.filter(p => !p.isHost).length;
-                if (others >= 1) {
-                    btn.disabled = false;
-                    btn.textContent = `Starta spelet (${players.length} spelare)`;
-                } else {
-                    btn.disabled = true;
-                    btn.textContent = 'Väntar på minst 1 till spelare...';
-                }
-            }
-        }
-
-        function startGame() {
-            if (players.length < 2) {
-                alert('Minst 2 spelare behövs!');
-                return;
-            }
-            socket.emit('start-game');
-        }
-
-        function startRound(round, data) {
-            currentRound = round;
-            // Servern kommer skicka 'your-turn' till rätt spelare
-        }
-
-        function handleYourTurn(data) {
-            if (data.type === 'write') {
+        function handleGameStart(room) {
+            GAME.maxRounds = room.maxRounds;
+            
+            // Runda 1: Alla skriver
+            if (room.currentRound === 1) {
                 showScreen('screen-write');
                 document.getElementById('word-input').value = '';
                 document.getElementById('word-input').focus();
-            } else if (data.type === 'draw') {
-                showDrawScreen(data.content);
-            } else if (data.type === 'guess') {
-                showGuessScreen(data.imageData);
+            }
+        }
+
+        function checkMyTurn(room) {
+            const mySubmission = room.submissions?.[GAME.currentRound]?.[GAME.myId];
+            
+            if (mySubmission) return; // Jag har redan gjort min tur
+
+            const roundData = room.roundData?.[GAME.currentRound];
+            if (!roundData) return;
+
+            const myAssignment = roundData[GAME.myId];
+            if (!myAssignment) return;
+
+            if (myAssignment.type === 'draw') {
+                showDrawScreen(myAssignment.content);
+            } else if (myAssignment.type === 'guess') {
+                showGuessScreen(myAssignment.imageData);
             }
         }
 
@@ -699,68 +569,214 @@
             document.getElementById('guess-input').focus();
         }
 
-        function startTimer(seconds, callback) {
-            let timeLeft = seconds;
-            const el = document.getElementById('draw-timer');
+        // STARTA SPEL
+        function startGame() {
+            if (GAME.players.length < 2) {
+                alert('Minst 2 spelare behövs!');
+                return;
+            }
+
+            const roomRef = database.ref('rooms/' + GAME.roomCode);
             
-            const interval = setInterval(() => {
-                el.textContent = timeLeft;
-                if (timeLeft <= 10) el.classList.add('urgent');
+            // Beräkna rundor
+            const n = GAME.players.length;
+            GAME.maxRounds = 1 + (n - 1) * 2; // Skriv + (rita+gissa) för varje
+
+            // Initiera kedjor
+            const chains = {};
+            GAME.players.forEach(p => {
+                chains[p.id] = [];
+            });
+
+            roomRef.update({
+                gameState: 'playing',
+                currentRound: 1,
+                maxRounds: GAME.maxRounds,
+                chains: chains,
+                submissions: { 1: {} },
+                roundData: { 1: {} }
+            });
+        }
+
+        // SUBMIT WORD
+        function submitWord() {
+            const word = document.getElementById('word-input').value.trim();
+            if (!word) {
+                alert('Skriv något!');
+                return;
+            }
+
+            const roomRef = database.ref('rooms/' + GAME.roomCode);
+            
+            // Spara i min kedja
+            const chainUpdate = {};
+            chainUpdate[GAME.myId] = firebase.database.ServerValue.arrayUnion({
+                type: 'word',
+                content: word,
+                author: GAME.myName
+            });
+
+            // Markera som klar
+            const submissionUpdate = {};
+            submissionUpdate[GAME.myId] = true;
+
+            roomRef.child('chains').update(chainUpdate);
+            roomRef.child('submissions/1').update(submissionUpdate);
+
+            showScreen('screen-waiting');
+            checkRoundComplete();
+        }
+
+        // SUBMIT DRAWING
+        function submitDrawing() {
+            clearInterval(GAME.timer);
+            const imageData = GAME.canvas.toDataURL('image/png');
+            
+            const roomRef = database.ref('rooms/' + GAME.roomCode);
+            
+            const chainUpdate = {};
+            chainUpdate[GAME.myId] = firebase.database.ServerValue.arrayUnion({
+                type: 'drawing',
+                content: imageData,
+                author: GAME.myName
+            });
+
+            roomRef.child('chains').update(chainUpdate);
+            roomRef.child('submissions/' + GAME.currentRound + '/' + GAME.myId).set(true);
+
+            showScreen('screen-waiting');
+            checkRoundComplete();
+        }
+
+        // SUBMIT GUESS
+        function submitGuess() {
+            const guess = document.getElementById('guess-input').value.trim();
+            if (!guess) {
+                alert('Skriv en gissning!');
+                return;
+            }
+
+            const roomRef = database.ref('rooms/' + GAME.roomCode);
+            
+            const chainUpdate = {};
+            chainUpdate[GAME.myId] = firebase.database.ServerValue.arrayUnion({
+                type: 'guess',
+                content: guess,
+                author: GAME.myName
+            });
+
+            roomRef.child('chains').update(chainUpdate);
+            roomRef.child('submissions/' + GAME.currentRound + '/' + GAME.myId).set(true);
+
+            showScreen('screen-waiting');
+            checkRoundComplete();
+        }
+
+        function checkRoundComplete() {
+            const roomRef = database.ref('rooms/' + GAME.roomCode);
+            
+            roomRef.once('value', (snapshot) => {
+                const room = snapshot.val();
+                const submissions = room.submissions?.[GAME.currentRound] || {};
                 
-                timeLeft--;
-                if (timeLeft < 0) {
-                    clearInterval(interval);
-                    callback();
+                if (Object.keys(submissions).length >= GAME.players.length) {
+                    // Alla klara, nästa runda
+                    nextRound(room);
+                } else {
+                    const waiting = GAME.players.length - Object.keys(submissions).length;
+                    document.getElementById('waiting-text').textContent = `Väntar på ${waiting} spelare till...`;
                 }
-            }, 1000);
+            });
+        }
+
+        function nextRound(room) {
+            const newRound = GAME.currentRound + 1;
+            const roomRef = database.ref('rooms/' + GAME.roomCode);
+            
+            if (newRound > GAME.maxRounds) {
+                // Spelet slut
+                roomRef.update({ gameState: 'ended' });
+                return;
+            }
+
+            // Förbereda nästa runda
+            const roundData = {};
+            const isDrawRound = newRound % 2 === 0;
+            const n = GAME.players.length;
+
+            GAME.players.forEach((player, i) => {
+                const prevIndex = (i - 1 + n) % n;
+                const prevPlayer = GAME.players[prevIndex];
+                const prevChain = room.chains?.[prevPlayer.id] || [];
+                const lastItem = prevChain[prevChain.length - 1];
+
+                if (isDrawRound) {
+                    // Ska rita
+                    const prompt = lastItem?.type === 'word' ? lastItem.content : lastItem?.content || 'okänt';
+                    roundData[player.id] = { type: 'draw', content: prompt };
+                } else {
+                    // Ska gissa - behöver bild från föregående
+                    // Hitta ritningen från föregående spelare i deras kedja
+                    const prevDrawing = prevChain.find(item => item.type === 'drawing');
+                    if (prevDrawing) {
+                        roundData[player.id] = { type: 'guess', imageData: prevDrawing.content };
+                    }
+                }
+            });
+
+            roomRef.update({
+                currentRound: newRound,
+                submissions: { ...room.submissions, [newRound]: {} },
+                roundData: { ...room.roundData, [newRound]: roundData }
+            });
         }
 
         // CANVAS
         function initCanvas() {
-            canvas = document.getElementById('canvas');
-            ctx = canvas.getContext('2d');
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+            GAME.canvas = document.getElementById('canvas');
+            GAME.ctx = GAME.canvas.getContext('2d');
+            GAME.ctx.fillStyle = 'white';
+            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
+            GAME.ctx.lineCap = 'round';
+            GAME.ctx.lineJoin = 'round';
 
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDraw);
-            canvas.addEventListener('mouseout', stopDraw);
-            canvas.addEventListener('touchstart', handleTouch, {passive: false});
-            canvas.addEventListener('touchmove', handleTouch, {passive: false});
-            canvas.addEventListener('touchend', stopDraw);
+            GAME.canvas.addEventListener('mousedown', startDraw);
+            GAME.canvas.addEventListener('mousemove', draw);
+            GAME.canvas.addEventListener('mouseup', stopDraw);
+            GAME.canvas.addEventListener('mouseout', stopDraw);
+            GAME.canvas.addEventListener('touchstart', handleTouch, {passive: false});
+            GAME.canvas.addEventListener('touchmove', handleTouch, {passive: false});
+            GAME.canvas.addEventListener('touchend', stopDraw);
         }
 
         function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
+            const rect = GAME.canvas.getBoundingClientRect();
             const x = (e.clientX || e.touches[0].clientX) - rect.left;
             const y = (e.clientY || e.touches[0].clientY) - rect.top;
             return {
-                x: x * (canvas.width / rect.width),
-                y: y * (canvas.height / rect.height)
+                x: x * (GAME.canvas.width / rect.width),
+                y: y * (GAME.canvas.height / rect.height)
             };
         }
 
         function startDraw(e) {
-            isDrawing = true;
+            GAME.isDrawing = true;
             const pos = getPos(e);
-            ctx.beginPath();
-            ctx.moveTo(pos.x, pos.y);
+            GAME.ctx.beginPath();
+            GAME.ctx.moveTo(pos.x, pos.y);
         }
 
         function draw(e) {
-            if (!isDrawing) return;
+            if (!GAME.isDrawing) return;
             const pos = getPos(e);
-            ctx.lineWidth = document.getElementById('brush-size').value;
-            ctx.strokeStyle = currentColor;
-            ctx.lineTo(pos.x, pos.y);
-            ctx.stroke();
+            GAME.ctx.lineWidth = document.getElementById('brush-size').value;
+            GAME.ctx.strokeStyle = GAME.currentColor;
+            GAME.ctx.lineTo(pos.x, pos.y);
+            GAME.ctx.stroke();
         }
 
         function stopDraw() {
-            isDrawing = false;
+            GAME.isDrawing = false;
         }
 
         function handleTouch(e) {
@@ -772,41 +788,81 @@
         }
 
         function setColor(color) {
-            currentColor = color;
+            GAME.currentColor = color;
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
         }
 
         function clearCanvas() {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            GAME.ctx.fillStyle = 'white';
+            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
         }
 
-        // SUBMISSIONS
-        function submitWord() {
-            const word = document.getElementById('word-input').value.trim();
-            if (!word) {
-                alert('Skriv något!');
+        function startTimer(seconds, callback) {
+            let timeLeft = seconds;
+            const el = document.getElementById('draw-timer');
+            
+            GAME.timer = setInterval(() => {
+                el.textContent = timeLeft;
+                if (timeLeft <= 10) el.classList.add('urgent');
+                
+                timeLeft--;
+                if (timeLeft < 0) {
+                    clearInterval(GAME.timer);
+                    callback();
+                }
+            }, 1000);
+        }
+
+        // UI HJÄLPFUNKTIONER
+        function updateLobbyStatus(msg, type) {
+            const el = document.getElementById('lobby-status');
+            el.textContent = msg;
+            el.className = 'status-message ' + type;
+        }
+
+        function updatePlayersList() {
+            const container = document.getElementById('players-list');
+            container.innerHTML = GAME.players.map(p => `
+                <div class="player-card ${p.id === GAME.myId ? 'you' : ''} ${p.isHost ? 'host' : ''}">
+                    <div class="avatar">${p.isHost ? '👑' : '🎨'}</div>
+                    <div style="font-weight: 600;">${p.name}</div>
+                    ${p.id === GAME.myId ? '<div style="font-size: 0.8rem; color: #667eea;">Du</div>' : ''}
+                </div>
+            `).join('');
+
+            if (GAME.isHost) {
+                const btn = document.getElementById('btn-start');
+                const others = GAME.players.filter(p => !p.isHost).length;
+                if (others >= 1) {
+                    btn.disabled = false;
+                    btn.textContent = `Starta spelet (${GAME.players.length} spelare)`;
+                } else {
+                    btn.disabled = true;
+                    btn.textContent = 'Väntar på minst 1 gäst...';
+                }
+            }
+        }
+
+        function showJoin() {
+            GAME.myName = document.getElementById('player-name').value.trim();
+            if (!GAME.myName) {
+                alert('Skriv ditt namn först!');
                 return;
             }
-            socket.emit('submit-word', word);
-            showScreen('screen-waiting');
+            showScreen('screen-join');
         }
 
-        function submitDrawing() {
-            const imageData = canvas.toDataURL();
-            socket.emit('submit-drawing', imageData);
-            showScreen('screen-waiting');
+        function showError(msg) {
+            const el = document.getElementById('join-error');
+            el.textContent = msg;
+            el.classList.remove('hidden');
         }
 
-        function submitGuess() {
-            const guess = document.getElementById('guess-input').value.trim();
-            if (!guess) {
-                alert('Skriv en gissning!');
-                return;
-            }
-            socket.emit('submit-guess', guess);
-            showScreen('screen-waiting');
+        function copyCode() {
+            navigator.clipboard.writeText(GAME.roomCode).then(() => {
+                alert('Kod kopierad: ' + GAME.roomCode);
+            });
         }
 
         function showResults(chains) {
@@ -815,31 +871,37 @@
             const container = document.getElementById('chains-container');
             container.innerHTML = '';
             
-            chains.forEach((chain, index) => {
-                const chainDiv = document.createElement('div');
-                chainDiv.className = 'card chain-viewer';
+            Object.entries(chains).forEach(([playerId, chain]) => {
+                const starter = GAME.players.find(p => p.id === playerId);
                 
-                let html = `<h3 style="color: #667eea; margin-bottom: 20px;">Kedja ${index + 1}</h3>`;
+                const div = document.createElement('div');
+                div.className = 'chain-result';
+                
+                let html = `<h3 style="color: #764ba2; margin-bottom: 15px;">${starter?.name || 'Okänd'}s kedja</h3>`;
                 
                 chain.forEach((item, i) => {
                     html += `<div class="chain-item">`;
-                    html += `<div class="chain-author">${item.author} ${item.type === 'word' ? 'skrev' : item.type === 'drawing' ? 'ritade' : 'gissade'}</div>`;
+                    html += `<div class="author">${item.author} ${item.type === 'word' ? 'skrev' : item.type === 'drawing' ? 'ritade' : 'gissade'}</div>`;
                     
                     if (item.type === 'drawing') {
-                        html += `<div class="chain-content"><img src="${item.content}" alt="Ritning"></div>`;
+                        html += `<img src="${item.content}" alt="Ritning">`;
                     } else {
-                        html += `<div class="chain-content">"${item.content}"</div>`;
+                        html += `<div style="font-size: 1.2rem;">"${item.content}"</div>`;
                     }
                     
                     html += `</div>`;
+                    
+                    if (i < chain.length - 1) {
+                        html += `<div class="arrow">⬇️</div>`;
+                    }
                 });
                 
-                chainDiv.innerHTML = html;
-                container.appendChild(chainDiv);
+                div.innerHTML = html;
+                container.appendChild(div);
             });
         }
 
-        console.log('DrawPhone laddad');
+        console.log('DrawPhone laddad!');
     </script>
 </body>
 </html>
