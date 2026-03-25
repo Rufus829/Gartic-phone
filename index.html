@@ -3,905 +3,1359 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DrawPhone - Fungerande Version</title>
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <title>Gartic Phone - Komplett Edition</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;900&display=swap');
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #1e1b4b;
+            --light: #f3f4f6;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Nunito', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            min-height: 100vh;
             padding: 20px;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Landing Screen */
+        .landing-screen {
+            text-align: center;
             color: white;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.95);
+        .logo {
+            font-family: 'Fredoka One', cursive;
+            font-size: 4rem;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.2);
+            margin-bottom: 10px;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            opacity: 0.9;
+        }
+
+        .btn {
+            background: white;
+            color: var(--primary);
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2rem;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        /* Lobby Screen */
+        .lobby-screen {
+            background: white;
             border-radius: 20px;
             padding: 30px;
-            color: #333;
+            max-width: 800px;
+            width: 100%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
 
-        h1 { text-align: center; color: #764ba2; margin-bottom: 10px; font-size: 2.5rem; }
-        .subtitle { text-align: center; color: #666; margin-bottom: 30px; }
-
-        .screen { display: none; }
-        .screen.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        input, button, textarea {
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 12px;
-            border: 2px solid #ddd;
-            font-size: 16px;
-        }
-
-        button {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        button:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
-        }
-
-        button:disabled { background: #ccc; cursor: not-allowed; }
-
-        .btn-secondary { background: #6c757d; }
-        .btn-secondary:hover { background: #5a6268; }
-
-        .room-code-box {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
+        .lobby-header {
             text-align: center;
-            margin: 20px 0;
+            margin-bottom: 30px;
+        }
+
+        .lobby-header h2 {
+            color: var(--dark);
+            font-size: 2rem;
         }
 
         .room-code {
-            font-size: 3.5rem;
-            font-weight: 800;
-            letter-spacing: 15px;
-            font-family: monospace;
-            margin: 15px 0;
-            cursor: pointer;
-            user-select: all;
-            text-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            background: var(--light);
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary);
+            display: inline-block;
+            margin: 10px 0;
+            letter-spacing: 5px;
         }
 
         .players-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 15px;
-            margin: 20px 0;
+            margin: 30px 0;
         }
 
         .player-card {
-            background: #f8f9fa;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 15px;
             text-align: center;
-            transition: all 0.2s;
+            position: relative;
+            animation: popIn 0.3s ease;
         }
 
-        .player-card.you { border: 3px solid #667eea; background: #f0f4ff; }
-        .player-card.host { border: 3px solid #fbbf24; background: #fffbeb; }
+        @keyframes popIn {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
 
-        .avatar {
-            width: 50px;
-            height: 50px;
+        .player-avatar {
+            width: 60px;
+            height: 60px;
+            background: white;
             border-radius: 50%;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            margin: 0 auto 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            margin: 0 auto 10px;
+            font-size: 2rem;
         }
 
-        .game-prompt {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .player-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .host-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: var(--accent);
             color: white;
-            padding: 25px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 900;
+        }
+
+        .settings-panel {
+            background: var(--light);
+            padding: 20px;
             border-radius: 15px;
-            text-align: center;
-            margin-bottom: 20px;
+            margin: 20px 0;
         }
 
-        .prompt-label { font-size: 1.1rem; opacity: 0.9; margin-bottom: 10px; }
-        .prompt-text { font-size: 2rem; font-weight: bold; }
-
-        canvas {
-            background: white;
-            border-radius: 12px;
-            display: block;
-            margin: 0 auto;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            cursor: crosshair;
-        }
-
-        .toolbar {
+        .setting-row {
             display: flex;
-            justify-content: center;
-            gap: 10px;
+            justify-content: space-between;
+            align-items: center;
             margin: 15px 0;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        input[type="number"], input[type="text"] {
+            padding: 10px 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-family: 'Nunito', sans-serif;
+            font-size: 1rem;
+            width: 100px;
+        }
+
+        input[type="text"] {
+            width: 200px;
+        }
+
+        /* Drawing Screen */
+        .drawing-screen {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 1000px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .drawing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
             flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .prompt-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            flex: 1;
+            text-align: center;
+        }
+
+        .timer {
+            background: var(--danger);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 1.5rem;
+            font-weight: 900;
+            min-width: 100px;
+            text-align: center;
+        }
+
+        .timer.warning {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .canvas-container {
+            position: relative;
+            background: #f8f9fa;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        #drawingCanvas {
+            display: block;
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .tools-panel {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .tool-group {
+            display: flex;
+            gap: 5px;
+            background: var(--light);
+            padding: 10px;
+            border-radius: 15px;
+        }
+
+        .tool-btn {
+            width: 45px;
+            height: 45px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.2s;
+            background: white;
+        }
+
+        .tool-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .tool-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .color-palette {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            max-width: 200px;
         }
 
         .color-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+            width: 35px;
+            height: 35px;
             border: 3px solid transparent;
+            border-radius: 50%;
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .color-btn:hover { transform: scale(1.1); }
-        .color-btn.active { border-color: #333; transform: scale(1.15); }
-
-        .timer {
-            font-size: 3rem;
-            text-align: center;
-            color: #764ba2;
-            font-weight: bold;
-            margin: 15px 0;
+        .color-btn:hover {
+            transform: scale(1.2);
         }
 
-        .timer.urgent { color: #ef4444; animation: pulse 1s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .color-btn.active {
+            border-color: var(--dark);
+            transform: scale(1.1);
+        }
 
-        .chain-result {
+        .brush-sizes {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+        }
+
+        .size-btn {
+            border-radius: 50%;
+            background: var(--dark);
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .size-btn.active {
+            border-color: var(--primary);
+        }
+
+        /* Writing Screen */
+        .writing-screen {
             background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .drawing-display {
+            background: #f8f9fa;
             border-radius: 15px;
             padding: 20px;
-            margin: 15px 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            max-height: 400px;
+            overflow: hidden;
+        }
+
+        .drawing-display img {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .guess-input {
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            font-size: 1.3rem;
+            border: 3px solid var(--primary);
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        /* Results Screen */
+        .results-screen {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 1000px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .chain-display {
+            margin: 20px 0;
+            padding: 20px;
+            background: var(--light);
+            border-radius: 15px;
         }
 
         .chain-item {
-            background: #f8f9fa;
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
             border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .chain-arrow {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin: 0 15px;
+        }
+
+        .chain-text {
+            flex: 1;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .chain-drawing {
+            max-width: 200px;
+            max-height: 150px;
+            border-radius: 10px;
+        }
+
+        /* Animation classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            animation: popIn 0.3s ease;
+        }
+
+        .modal h2 {
+            color: var(--dark);
+            margin-bottom: 20px;
+        }
+
+        .name-input {
+            width: 100%;
             padding: 15px;
-            margin: 10px 0;
+            font-size: 1.2rem;
+            border: 3px solid var(--primary);
+            border-radius: 10px;
+            margin: 20px 0;
             text-align: center;
+            font-family: 'Nunito', sans-serif;
         }
 
-        .chain-item img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 10px;
+        .avatar-selector {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
         }
 
-        .author {
-            font-weight: bold;
-            color: #764ba2;
-            margin-bottom: 5px;
-        }
-
-        .arrow {
-            text-align: center;
+        .avatar-option {
+            width: 60px;
+            height: 60px;
             font-size: 2rem;
-            color: #764ba2;
-            margin: 5px 0;
+            background: var(--light);
+            border: 3px solid transparent;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .status-message {
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 10px 0;
+        .avatar-option:hover {
+            transform: scale(1.1);
         }
 
-        .status-message.success { background: #d1fae5; color: #065f46; }
-        .status-message.error { background: #fee2e2; color: #991b1b; }
-        .status-message.info { background: #dbeafe; color: #1e40af; }
+        .avatar-option.selected {
+            border-color: var(--primary);
+            background: white;
+        }
 
-        .hidden { display: none !important; }
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo { font-size: 2.5rem; }
+            .drawing-header { flex-direction: column; }
+            .tools-panel { justify-content: center; }
+            .chain-item { flex-direction: column; text-align: center; }
+            .chain-arrow { transform: rotate(90deg); margin: 10px 0; }
+        }
 
-        @media (max-width: 600px) {
-            .room-code { font-size: 2.5rem; letter-spacing: 8px; }
-            canvas { max-width: 100%; height: auto; }
+        /* Loading animation */
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: var(--light);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            transition: width 0.3s;
+        }
+
+        .round-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .round-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: all 0.3s;
+        }
+
+        .round-dot.active {
+            background: var(--primary);
+            transform: scale(1.3);
+        }
+
+        .round-dot.completed {
+            background: var(--success);
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎨 DrawPhone</h1>
-        <p class="subtitle">Telefonspelet med bilder</p>
 
-        <!-- MENU -->
-        <div id="screen-menu" class="screen active">
-            <input type="text" id="player-name" placeholder="Ditt namn" maxlength="20">
-            <button onclick="createRoom()">Skapa rum</button>
-            <button onclick="showJoin()" class="btn-secondary">Gå med i rum</button>
-            
-            <div style="margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 12px;">
-                <h3 style="color: #764ba2; margin-bottom: 15px;">Så fungerar det:</h3>
-                <ol style="padding-left: 20px; line-height: 2;">
-                    <li>Skriv ett ord eller mening</li>
-                    <li>Nästa person ritar det</li>
-                    <li>Nästa gissar vad det är</li>
-                    <li>Se hur det förvandlas! 😂</li>
-                </ol>
+    <!-- Name/Avatar Modal -->
+    <div class="modal active" id="nameModal">
+        <div class="modal-content">
+            <h2>Välj ditt namn och avatar!</h2>
+            <input type="text" class="name-input" id="playerName" placeholder="Ditt namn" maxlength="12">
+            <div class="avatar-selector" id="avatarSelector">
+                <div class="avatar-option selected" data-avatar="🎨">🎨</div>
+                <div class="avatar-option" data-avatar="🎭">🎭</div>
+                <div class="avatar-option" data-avatar="🎪">🎪</div>
+                <div class="avatar-option" data-avatar="🎯">🎯</div>
+                <div class="avatar-option" data-avatar="🎲">🎲</div>
+                <div class="avatar-option" data-avatar="🎸">🎸</div>
+                <div class="avatar-option" data-avatar="🌟">🌟</div>
+                <div class="avatar-option" data-avatar="🔥">🔥</div>
+            </div>
+            <button class="btn btn-primary" onclick="confirmPlayer()">Fortsätt</button>
+        </div>
+    </div>
+
+    <!-- Landing Screen -->
+    <div class="screen active landing-screen" id="landingScreen">
+        <h1 class="logo">🎨 Gartic Phone</h1>
+        <p class="subtitle">Telefonlådan för konstnärer!</p>
+        <div>
+            <button class="btn btn-primary" onclick="createRoom()">🏠 Skapa Rum</button>
+            <button class="btn" onclick="showJoin()">🔑 Gå Med</button>
+        </div>
+    </div>
+
+    <!-- Join Screen -->
+    <div class="screen landing-screen" id="joinScreen">
+        <h1 class="logo">🔑 Gå Med i Rum</h1>
+        <input type="text" class="name-input" id="roomCodeInput" placeholder="Rumskod (4 siffror)" maxlength="4" style="width: 300px; margin: 30px;">
+        <div>
+            <button class="btn btn-primary" onclick="joinRoom()">Gå Med</button>
+            <button class="btn" onclick="showScreen('landingScreen')">Tillbaka</button>
+        </div>
+    </div>
+
+    <!-- Lobby Screen -->
+    <div class="screen" id="lobbyScreen">
+        <div class="lobby-screen">
+            <div class="lobby-header">
+                <h2>Väntar på spelare...</h2>
+                <div class="room-code" id="roomCodeDisplay">0000</div>
+                <p>Dela denna kod med dina vänner!</p>
+            </div>
+
+            <div class="round-indicator" id="lobbyRounds">
+                <div class="round-dot active"></div>
+                <div class="round-dot"></div>
+                <div class="round-dot"></div>
+                <div class="round-dot"></div>
+            </div>
+
+            <div class="players-grid" id="playersGrid">
+                <!-- Players will be added here -->
+            </div>
+
+            <div class="settings-panel" id="hostSettings">
+                <h3 style="margin-bottom: 15px; color: var(--dark);">⚙️ Inställningar</h3>
+                <div class="setting-row">
+                    <span class="setting-label">Rit-tid (sekunder)</span>
+                    <input type="number" id="drawTime" value="60" min="30" max="180" step="10">
+                </div>
+                <div class="setting-row">
+                    <span class="setting-label">Antal rundor</span>
+                    <input type="number" id="roundCount" value="5" min="3" max="10">
+                </div>
+            </div>
+
+            <button class="btn btn-primary" id="startBtn" onclick="startGame()" style="width: 100%; margin-top: 20px;">
+                🚀 Starta Spelet!
+            </button>
+        </div>
+    </div>
+
+    <!-- Drawing Screen -->
+    <div class="screen" id="drawingScreen">
+        <div class="drawing-screen">
+            <div class="drawing-header">
+                <div class="prompt-box" id="drawPrompt">Rita: En katt som dansar</div>
+                <div class="timer" id="drawTimer">60</div>
+            </div>
+
+            <div class="round-indicator" id="drawRounds"></div>
+
+            <div class="canvas-container">
+                <canvas id="drawingCanvas" width="800" height="500"></canvas>
+            </div>
+
+            <div class="tools-panel">
+                <div class="tool-group">
+                    <button class="tool-btn active" onclick="setTool('pen')" title="Penna">✏️</button>
+                    <button class="tool-btn" onclick="setTool('eraser')" title="Suddgummi">🧼</button>
+                    <button class="tool-btn" onclick="clearCanvas()" title="Rensa">🗑️</button>
+                    <button class="tool-btn" onclick="undo()" title="Ångra">↩️</button>
+                </div>
+
+                <div class="color-palette" id="colorPalette">
+                    <div class="color-btn active" style="background: #000000" data-color="#000000"></div>
+                    <div class="color-btn" style="background: #ef4444" data-color="#ef4444"></div>
+                    <div class="color-btn" style="background: #f59e0b" data-color="#f59e0b"></div>
+                    <div class="color-btn" style="background: #10b981" data-color="#10b981"></div>
+                    <div class="color-btn" style="background: #3b82f6" data-color="#3b82f6"></div>
+                    <div class="color-btn" style="background: #6366f1" data-color="#6366f1"></div>
+                    <div class="color-btn" style="background: #ec4899" data-color="#ec4899"></div>
+                    <div class="color-btn" style="background: #8b5cf6" data-color="#8b5cf6"></div>
+                    <div class="color-btn" style="background: #ffffff; border: 2px solid #ddd" data-color="#ffffff"></div>
+                </div>
+
+                <div class="brush-sizes">
+                    <div class="size-btn active" style="width: 10px; height: 10px" data-size="3"></div>
+                    <div class="size-btn" style="width: 20px; height: 20px" data-size="8"></div>
+                    <div class="size-btn" style="width: 30px; height: 30px" data-size="15"></div>
+                    <div class="size-btn" style="width: 40px; height: 40px" data-size="25"></div>
+                </div>
+
+                <button class="btn btn-primary" onclick="submitDrawing()" id="submitDrawBtn">
+                    ✅ Klar!
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- JOIN -->
-        <div id="screen-join" class="screen">
-            <input type="text" id="join-code" placeholder="Rumskod (4 bokstäver)" maxlength="4" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 5px;">
-            <button onclick="joinRoom()">Anslut</button>
-            <button onclick="showScreen('screen-menu')" class="btn-secondary">Tillbaka</button>
-            <div id="join-error" class="status-message error hidden"></div>
+    <!-- Writing Screen -->
+    <div class="screen" id="writingScreen">
+        <div class="writing-screen">
+            <h2 style="color: var(--dark); margin-bottom: 10px;">Vad ser du på bilden?</h2>
+            <div class="timer" id="writeTimer" style="margin: 0 auto 20px; display: inline-block;">60</div>
+            
+            <div class="round-indicator" id="writeRounds"></div>
+
+            <div class="drawing-display" id="drawingDisplay">
+                <img id="displayedDrawing" src="" alt="Ritning att gissa på">
+            </div>
+
+            <input type="text" class="guess-input" id="guessInput" placeholder="Skriv vad du ser..." maxlength="50">
+            
+            <button class="btn btn-primary" onclick="submitGuess()" style="padding: 15px 50px;">
+                Skicka gissning!
+            </button>
         </div>
+    </div>
 
-        <!-- LOBBY -->
-        <div id="screen-lobby" class="screen">
-            <div class="room-code-box">
-                <p>Rumskod (dela med vänner):</p>
-                <div class="room-code" id="room-code" onclick="copyCode()">----</div>
-                <p style="font-size: 0.9rem; opacity: 0.9;">Klicka för att kopiera</p>
+    <!-- Waiting Screen -->
+    <div class="screen" id="waitingScreen">
+        <div class="writing-screen">
+            <div class="loader"></div>
+            <h2>Väntar på andra spelare...</h2>
+            <div class="progress-bar">
+                <div class="progress-fill" id="waitProgress" style="width: 0%"></div>
             </div>
-
-            <div id="lobby-status" class="status-message info">Ansluter...</div>
-
-            <div class="players-grid" id="players-list"></div>
-
-            <div id="host-controls">
-                <button onclick="startGame()" id="btn-start" disabled>Väntar på spelare...</button>
-            </div>
-            
-            <div id="client-waiting" class="hidden" style="text-align: center; color: #666;">
-                Väntar på att host ska starta spelet...
-            </div>
+            <p id="waitStatus">0 / 4 klara</p>
         </div>
+    </div>
 
-        <!-- WRITE -->
-        <div id="screen-write" class="screen">
-            <div class="game-prompt">
-                <div class="prompt-label">Skriv något som nästa person ska rita:</div>
+    <!-- Results Screen -->
+    <div class="screen" id="resultsScreen">
+        <div class="results-screen">
+            <h2 style="text-align: center; color: var(--dark); margin-bottom: 10px;">🎉 Resultat!</h2>
+            <div class="round-indicator" id="resultRounds"></div>
+            
+            <div id="resultsContainer">
+                <!-- Chains will be displayed here -->
             </div>
-            <input type="text" id="word-input" placeholder="T.ex. 'En katt i rymden'" maxlength="50" style="font-size: 1.3rem; text-align: center;">
-            <button onclick="submitWord()">Skicka!</button>
-        </div>
 
-        <!-- DRAW -->
-        <div id="screen-draw" class="screen">
-            <div class="game-prompt">
-                <div class="prompt-label">Rita detta:</div>
-                <div class="prompt-text" id="draw-prompt">...</div>
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn btn-primary" onclick="playAgain()">🔄 Spela Igen</button>
+                <button class="btn" onclick="backToLobby()">🏠 Tillbaka till Lobbyn</button>
             </div>
-            
-            <div class="timer" id="draw-timer">60</div>
-            
-            <canvas id="canvas" width="800" height="500"></canvas>
-            
-            <div class="toolbar">
-                <div class="color-btn active" style="background: #000" onclick="setColor('#000000')"></div>
-                <div class="color-btn" style="background: #ef4444" onclick="setColor('#ef4444')"></div>
-                <div class="color-btn" style="background: #3b82f6" onclick="setColor('#3b82f6')"></div>
-                <div class="color-btn" style="background: #22c55e" onclick="setColor('#22c55e')"></div>
-                <div class="color-btn" style="background: #eab308" onclick="setColor('#eab308')"></div>
-                <div class="color-btn" style="background: #a855f7" onclick="setColor('#a855f7')"></div>
-                <div class="color-btn" style="background: #ec4899" onclick="setColor('#ec4899')"></div>
-                <div class="color-btn" style="background: #ffffff; border: 2px solid #ddd" onclick="setColor('#ffffff')"></div>
-                
-                <input type="range" id="brush-size" min="2" max="30" value="5" style="width: 100px;">
-                <button onclick="clearCanvas()" style="width: auto; background: #ef4444;">Rensa</button>
-            </div>
-            
-            <button onclick="submitDrawing()">Jag är klar!</button>
-        </div>
-
-        <!-- GUESS -->
-        <div id="screen-guess" class="screen">
-            <div class="game-prompt">
-                <div class="prompt-label">Vad är detta?</div>
-            </div>
-            
-            <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
-                <img id="guess-image" style="max-width: 100%; border-radius: 8px; display: block; margin: 0 auto;">
-            </div>
-            
-            <input type="text" id="guess-input" placeholder="Skriv din gissning..." maxlength="50" style="font-size: 1.3rem; text-align: center;">
-            <button onclick="submitGuess()">Gissa!</button>
-        </div>
-
-        <!-- WAITING -->
-        <div id="screen-waiting" class="screen">
-            <div style="text-align: center; padding: 60px 20px;">
-                <div style="width: 60px; height: 60px; border: 5px solid #f3f3f3; border-top: 5px solid #764ba2; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px;"></div>
-                <h2>Väntar på andra spelare...</h2>
-                <p style="color: #666; margin-top: 10px;" id="waiting-text">Alla måste klara sin tur</p>
-            </div>
-        </div>
-
-        <!-- RESULTS -->
-        <div id="screen-results" class="screen">
-            <h2 style="text-align: center; color: #764ba2; margin-bottom: 30px;">🎉 Resultat!</h2>
-            <div id="chains-container"></div>
-            <button onclick="location.reload()" style="margin-top: 30px;">Spela igen</button>
         </div>
     </div>
 
     <script>
-        // 🔥 FIREBASE-KONFIGURATION (GRATIS, PÅLITLIG)
-        // Detta är min test-databas. Du kan skapa din egen gratis på firebase.google.com
-        const firebaseConfig = {
-            apiKey: "AIzaSyDummy-BytaMEDanvANDEttingar",
-            authDomain: "drawphone-game.firebaseapp.com",
-            databaseURL: "https://drawphone-game-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "drawphone-game",
-            storageBucket: "drawphone-game.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef123456"
-        };
-
-        // Initiera Firebase
-        let app, database;
-        let connected = false;
-
-        try {
-            app = firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            connected = true;
-            console.log('Firebase ansluten!');
-        } catch (e) {
-            console.error('Firebase fel:', e);
-            alert('Kunde inte ansluta till databasen. Försök igen senare.');
-        }
-
-        // SPELSTATE
-        const GAME = {
-            myId: 'player-' + Math.random().toString(36).substr(2, 9),
-            myName: '',
-            roomCode: null,
-            isHost: false,
-            players: [],
-            currentRound: 0,
-            maxRounds: 0,
-            myTurn: false,
-            receivedFrom: null,
-            canvas: null,
-            ctx: null,
-            isDrawing: false,
-            currentColor: '#000000',
-            timer: null
-        };
-
-        function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-        }
-
-        // Generera 4-siffrig kod
-        function generateCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 4; i++) {
-                code += chars.charAt(Math.floor(Math.random() * chars.length));
+        // Game State
+        const gameState = {
+            player: {
+                name: '',
+                avatar: '🎨',
+                isHost: false,
+                id: Math.random().toString(36).substr(2, 9)
+            },
+            room: {
+                code: '',
+                players: [],
+                settings: {
+                    drawTime: 60,
+                    rounds: 5
+                }
+            },
+            game: {
+                currentRound: 0,
+                totalRounds: 5,
+                isDrawingPhase: true,
+                prompts: [],
+                drawings: [],
+                guesses: [],
+                chains: [],
+                timer: null,
+                timeLeft: 60
+            },
+            canvas: {
+                tool: 'pen',
+                color: '#000000',
+                size: 3,
+                isDrawing: false,
+                strokes: [],
+                currentStroke: []
             }
-            return code;
+        };
+
+        // Sample prompts
+        const samplePrompts = [
+            "En katt som dansar",
+            "En elefant på rymmen",
+            "En pirat som lagar mat",
+            "En robot som gråter",
+            "En enhörning i rymden",
+            "En dinosaurie som spelar gitarr",
+            "En astronaut som fikar",
+            "Ett spöke på semester",
+            "En drake som yogar",
+            "En hund som surfar",
+            "En groda som är prins",
+            "Ett monster som bakar",
+            "En kanin som boxas",
+            "En björn som målar",
+            "En fisk som flyger"
+        ];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            setupCanvas();
+            setupColorPalette();
+            setupBrushSizes();
+            setupAvatarSelector();
+            
+            // Enter key handlers
+            document.getElementById('playerName').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') confirmPlayer();
+            });
+            document.getElementById('roomCodeInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') joinRoom();
+            });
+            document.getElementById('guessInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitGuess();
+            });
+        });
+
+        function setupAvatarSelector() {
+            const selector = document.getElementById('avatarSelector');
+            selector.querySelectorAll('.avatar-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    selector.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    gameState.player.avatar = option.dataset.avatar;
+                });
+            });
         }
 
-        // SKAPA RUM
-        function createRoom() {
-            GAME.myName = document.getElementById('player-name').value.trim();
-            if (!GAME.myName) {
-                alert('Skriv ditt namn!');
+        function confirmPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            if (name.length < 2) {
+                alert('Vänligen ange ett namn (minst 2 tecken)');
                 return;
             }
+            gameState.player.name = name;
+            document.getElementById('nameModal').classList.remove('active');
+        }
 
-            GAME.isHost = true;
-            GAME.roomCode = generateCode();
-            GAME.players = [{
-                id: GAME.myId,
-                name: GAME.myName,
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function showJoin() {
+            showScreen('joinScreen');
+        }
+
+        function createRoom() {
+            gameState.player.isHost = true;
+            gameState.room.code = Math.floor(1000 + Math.random() * 9000).toString();
+            
+            // Add host to players
+            gameState.room.players = [{
+                ...gameState.player,
                 isHost: true
             }];
-
-            // Spara i Firebase
-            const roomRef = database.ref('rooms/' + GAME.roomCode);
-            roomRef.set({
-                created: Date.now(),
-                gameState: 'waiting',
-                players: GAME.players,
-                currentRound: 0,
-                chains: {}
-            });
-
-            // Lyssna på ändringar
-            setupRoomListener();
-
-            showScreen('screen-lobby');
-            document.getElementById('room-code').textContent = GAME.roomCode;
-            updateLobbyStatus('Rum skapat! Väntar på spelare...', 'success');
-            updatePlayersList();
             
-            document.getElementById('host-controls').classList.remove('hidden');
-            document.getElementById('client-waiting').classList.add('hidden');
+            document.getElementById('roomCodeDisplay').textContent = gameState.room.code;
+            updatePlayersGrid();
+            showScreen('lobbyScreen');
+            
+            // Simulate other players joining (for demo)
+            simulatePlayersJoining();
         }
 
-        // GÅ MED I RUM
         function joinRoom() {
-            GAME.myName = document.getElementById('player-name').value.trim();
-            const code = document.getElementById('join-code').value.trim().toUpperCase();
+            const code = document.getElementById('roomCodeInput').value;
+            if (code.length !== 4 || !/^\d+$/.test(code)) {
+                alert('Ange en giltig 4-siffrig kod');
+                return;
+            }
             
-            if (!GAME.myName) {
-                showError('Gå tillbaka och skriv ditt namn först!');
-                return;
-            }
-            if (code.length !== 4) {
-                showError('Koden måste vara 4 tecken!');
-                return;
-            }
+            gameState.room.code = code;
+            gameState.player.isHost = false;
+            
+            // Simulate joining existing room
+            gameState.room.players = [
+                { name: 'Spelare 1', avatar: '🎭', isHost: true, id: '1' },
+                { name: 'Spelare 2', avatar: '🎯', isHost: false, id: '2' },
+                gameState.player
+            ];
+            
+            document.getElementById('roomCodeDisplay').textContent = code;
+            document.getElementById('hostSettings').style.display = 'none';
+            document.getElementById('startBtn').style.display = 'none';
+            updatePlayersGrid();
+            showScreen('lobbyScreen');
+        }
 
-            // Kolla om rummet finns
-            const roomRef = database.ref('rooms/' + code);
-            roomRef.once('value', (snapshot) => {
-                const room = snapshot.val();
-                
-                if (!room) {
-                    showError('Rummet finns inte!');
+        function simulatePlayersJoining() {
+            const names = ['Anna', 'Erik', 'Lisa', 'Marcus'];
+            const avatars = ['🎭', '🎯', '🎪', '🎲'];
+            
+            let i = 0;
+            const interval = setInterval(() => {
+                if (i >= 3 || !document.getElementById('lobbyScreen').classList.contains('active')) {
+                    clearInterval(interval);
                     return;
                 }
                 
-                if (room.gameState !== 'waiting') {
-                    showError('Spelet har redan startat!');
-                    return;
-                }
-                
-                if (room.players.length >= 8) {
-                    showError('Rummet är fullt!');
-                    return;
-                }
-
-                // Gå med
-                GAME.roomCode = code;
-                GAME.isHost = false;
-                GAME.players = room.players;
-                GAME.players.push({
-                    id: GAME.myId,
-                    name: GAME.myName,
-                    isHost: false
+                gameState.room.players.push({
+                    name: names[i],
+                    avatar: avatars[i],
+                    isHost: false,
+                    id: (i + 2).toString()
                 });
-
-                // Uppdatera Firebase
-                roomRef.update({ players: GAME.players });
                 
-                // Lyssna på ändringar
-                setupRoomListener();
+                updatePlayersGrid();
+                i++;
+            }, 2000);
+        }
 
-                showScreen('screen-lobby');
-                document.getElementById('room-code').textContent = code;
-                updateLobbyStatus('Ansluten! Väntar på att spelet ska starta...', 'success');
-                
-                document.getElementById('host-controls').classList.add('hidden');
-                document.getElementById('client-waiting').classList.remove('hidden');
+        function updatePlayersGrid() {
+            const grid = document.getElementById('playersGrid');
+            grid.innerHTML = '';
+            
+            gameState.room.players.forEach(player => {
+                const card = document.createElement('div');
+                card.className = 'player-card fade-in';
+                card.innerHTML = `
+                    <div class="player-avatar">${player.avatar}</div>
+                    <div class="player-name">${player.name}</div>
+                    ${player.isHost ? '<span class="host-badge">👑 HOST</span>' : ''}
+                `;
+                grid.appendChild(card);
             });
         }
 
-        function setupRoomListener() {
-            const roomRef = database.ref('rooms/' + GAME.roomCode);
-            
-            roomRef.on('value', (snapshot) => {
-                const room = snapshot.val();
-                if (!room) return;
-
-                GAME.players = room.players || [];
-                updatePlayersList();
-
-                // Kolla om spelet startat
-                if (room.gameState === 'playing' && GAME.currentRound === 0) {
-                    GAME.currentRound = room.currentRound || 1;
-                    GAME.maxRounds = room.maxRounds || 1;
-                    handleGameStart(room);
-                }
-
-                // Kolla rundor
-                if (room.currentRound > GAME.currentRound) {
-                    GAME.currentRound = room.currentRound;
-                    checkMyTurn(room);
-                }
-
-                // Kolla om spelet slutat
-                if (room.gameState === 'ended' && document.getElementById('screen-results').classList.contains('active') === false) {
-                    showResults(room.chains);
-                }
-            });
-        }
-
-        function handleGameStart(room) {
-            GAME.maxRounds = room.maxRounds;
-            
-            // Runda 1: Alla skriver
-            if (room.currentRound === 1) {
-                showScreen('screen-write');
-                document.getElementById('word-input').value = '';
-                document.getElementById('word-input').focus();
-            }
-        }
-
-        function checkMyTurn(room) {
-            const mySubmission = room.submissions?.[GAME.currentRound]?.[GAME.myId];
-            
-            if (mySubmission) return; // Jag har redan gjort min tur
-
-            const roundData = room.roundData?.[GAME.currentRound];
-            if (!roundData) return;
-
-            const myAssignment = roundData[GAME.myId];
-            if (!myAssignment) return;
-
-            if (myAssignment.type === 'draw') {
-                showDrawScreen(myAssignment.content);
-            } else if (myAssignment.type === 'guess') {
-                showGuessScreen(myAssignment.imageData);
-            }
-        }
-
-        function showDrawScreen(prompt) {
-            showScreen('screen-draw');
-            document.getElementById('draw-prompt').textContent = prompt;
-            initCanvas();
-            startTimer(60, submitDrawing);
-        }
-
-        function showGuessScreen(imageData) {
-            showScreen('screen-guess');
-            document.getElementById('guess-image').src = imageData;
-            document.getElementById('guess-input').value = '';
-            document.getElementById('guess-input').focus();
-        }
-
-        // STARTA SPEL
         function startGame() {
-            if (GAME.players.length < 2) {
-                alert('Minst 2 spelare behövs!');
+            if (gameState.room.players.length < 2) {
+                alert('Vänta på fler spelare! (Minst 2 behövs)');
                 return;
             }
-
-            const roomRef = database.ref('rooms/' + GAME.roomCode);
             
-            // Beräkna rundor
-            const n = GAME.players.length;
-            GAME.maxRounds = 1 + (n - 1) * 2; // Skriv + (rita+gissa) för varje
-
-            // Initiera kedjor
-            const chains = {};
-            GAME.players.forEach(p => {
-                chains[p.id] = [];
+            gameState.game.totalRounds = parseInt(document.getElementById('roundCount').value);
+            gameState.game.currentRound = 0;
+            gameState.game.chains = [];
+            
+            // Initialize chains for each player
+            gameState.room.players.forEach((player, index) => {
+                gameState.game.chains.push({
+                    owner: player,
+                    items: [{
+                        type: 'prompt',
+                        content: samplePrompts[index % samplePrompts.length],
+                        author: player
+                    }]
+                });
             });
-
-            roomRef.update({
-                gameState: 'playing',
-                currentRound: 1,
-                maxRounds: GAME.maxRounds,
-                chains: chains,
-                submissions: { 1: {} },
-                roundData: { 1: {} }
-            });
+            
+            startRound();
         }
 
-        // SUBMIT WORD
-        function submitWord() {
-            const word = document.getElementById('word-input').value.trim();
-            if (!word) {
-                alert('Skriv något!');
+        function startRound() {
+            gameState.game.currentRound++;
+            updateRoundIndicators();
+            
+            if (gameState.game.currentRound > gameState.game.totalRounds) {
+                showResults();
                 return;
             }
-
-            const roomRef = database.ref('rooms/' + GAME.roomCode);
             
-            // Spara i min kedja
-            const chainUpdate = {};
-            chainUpdate[GAME.myId] = firebase.database.ServerValue.arrayUnion({
-                type: 'word',
-                content: word,
-                author: GAME.myName
-            });
-
-            // Markera som klar
-            const submissionUpdate = {};
-            submissionUpdate[GAME.myId] = true;
-
-            roomRef.child('chains').update(chainUpdate);
-            roomRef.child('submissions/1').update(submissionUpdate);
-
-            showScreen('screen-waiting');
-            checkRoundComplete();
-        }
-
-        // SUBMIT DRAWING
-        function submitDrawing() {
-            clearInterval(GAME.timer);
-            const imageData = GAME.canvas.toDataURL('image/png');
+            // Alternate between drawing and writing
+            gameState.game.isDrawingPhase = gameState.game.currentRound % 2 === 1;
             
-            const roomRef = database.ref('rooms/' + GAME.roomCode);
-            
-            const chainUpdate = {};
-            chainUpdate[GAME.myId] = firebase.database.ServerValue.arrayUnion({
-                type: 'drawing',
-                content: imageData,
-                author: GAME.myName
-            });
-
-            roomRef.child('chains').update(chainUpdate);
-            roomRef.child('submissions/' + GAME.currentRound + '/' + GAME.myId).set(true);
-
-            showScreen('screen-waiting');
-            checkRoundComplete();
-        }
-
-        // SUBMIT GUESS
-        function submitGuess() {
-            const guess = document.getElementById('guess-input').value.trim();
-            if (!guess) {
-                alert('Skriv en gissning!');
-                return;
+            if (gameState.game.isDrawingPhase) {
+                showDrawingScreen();
+            } else {
+                showWritingScreen();
             }
-
-            const roomRef = database.ref('rooms/' + GAME.roomCode);
-            
-            const chainUpdate = {};
-            chainUpdate[GAME.myId] = firebase.database.ServerValue.arrayUnion({
-                type: 'guess',
-                content: guess,
-                author: GAME.myName
-            });
-
-            roomRef.child('chains').update(chainUpdate);
-            roomRef.child('submissions/' + GAME.currentRound + '/' + GAME.myId).set(true);
-
-            showScreen('screen-waiting');
-            checkRoundComplete();
         }
 
-        function checkRoundComplete() {
-            const roomRef = database.ref('rooms/' + GAME.roomCode);
+        function updateRoundIndicators() {
+            const indicators = document.querySelectorAll('.round-indicator');
+            indicators.forEach(ind => {
+                ind.innerHTML = '';
+                for (let i = 0; i < gameState.game.totalRounds; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'round-dot';
+                    if (i < gameState.game.currentRound - 1) dot.classList.add('completed');
+                    else if (i === gameState.game.currentRound - 1) dot.classList.add('active');
+                    ind.appendChild(dot);
+                }
+            });
+        }
+
+        function showDrawingScreen() {
+            showScreen('drawingScreen');
             
-            roomRef.once('value', (snapshot) => {
-                const room = snapshot.val();
-                const submissions = room.submissions?.[GAME.currentRound] || {};
+            // Get prompt from previous round (or initial prompt)
+            const chainIndex = gameState.room.players.findIndex(p => p.id === gameState.player.id);
+            const chain = gameState.game.chains[chainIndex];
+            const lastItem = chain.items[chain.items.length - 1];
+            
+            const prompt = lastItem.type === 'prompt' ? lastItem.content : lastItem.content;
+            document.getElementById('drawPrompt').textContent = `Rita: ${lastItem.content}`;
+            
+            clearCanvas();
+            startTimer(parseInt(document.getElementById('drawTime').value), 'drawTimer', submitDrawing);
+        }
+
+        function setupCanvas() {
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size based on container
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = container.clientWidth - 40;
+                canvas.height = Math.min(500, window.innerHeight * 0.5);
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Drawing events
+            function startDrawing(e) {
+                gameState.canvas.isDrawing = true;
+                gameState.canvas.currentStroke = [];
+                const pos = getPos(e);
+                gameState.canvas.currentStroke.push({x: pos.x, y: pos.y});
                 
-                if (Object.keys(submissions).length >= GAME.players.length) {
-                    // Alla klara, nästa runda
-                    nextRound(room);
-                } else {
-                    const waiting = GAME.players.length - Object.keys(submissions).length;
-                    document.getElementById('waiting-text').textContent = `Väntar på ${waiting} spelare till...`;
-                }
-            });
-        }
-
-        function nextRound(room) {
-            const newRound = GAME.currentRound + 1;
-            const roomRef = database.ref('rooms/' + GAME.roomCode);
-            
-            if (newRound > GAME.maxRounds) {
-                // Spelet slut
-                roomRef.update({ gameState: 'ended' });
-                return;
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
             }
-
-            // Förbereda nästa runda
-            const roundData = {};
-            const isDrawRound = newRound % 2 === 0;
-            const n = GAME.players.length;
-
-            GAME.players.forEach((player, i) => {
-                const prevIndex = (i - 1 + n) % n;
-                const prevPlayer = GAME.players[prevIndex];
-                const prevChain = room.chains?.[prevPlayer.id] || [];
-                const lastItem = prevChain[prevChain.length - 1];
-
-                if (isDrawRound) {
-                    // Ska rita
-                    const prompt = lastItem?.type === 'word' ? lastItem.content : lastItem?.content || 'okänt';
-                    roundData[player.id] = { type: 'draw', content: prompt };
+            
+            function draw(e) {
+                if (!gameState.canvas.isDrawing) return;
+                
+                const pos = getPos(e);
+                gameState.canvas.currentStroke.push({x: pos.x, y: pos.y});
+                
+                ctx.lineWidth = gameState.canvas.size;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                
+                if (gameState.canvas.tool === 'eraser') {
+                    ctx.globalCompositeOperation = 'destination-out';
                 } else {
-                    // Ska gissa - behöver bild från föregående
-                    // Hitta ritningen från föregående spelare i deras kedja
-                    const prevDrawing = prevChain.find(item => item.type === 'drawing');
-                    if (prevDrawing) {
-                        roundData[player.id] = { type: 'guess', imageData: prevDrawing.content };
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.strokeStyle = gameState.canvas.color;
+                }
+                
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            }
+            
+            function stopDrawing() {
+                if (gameState.canvas.isDrawing) {
+                    gameState.canvas.isDrawing = false;
+                    if (gameState.canvas.currentStroke.length > 0) {
+                        gameState.canvas.strokes.push({
+                            tool: gameState.canvas.tool,
+                            color: gameState.canvas.color,
+                            size: gameState.canvas.size,
+                            points: [...gameState.canvas.currentStroke]
+                        });
                     }
+                    ctx.beginPath();
+                }
+            }
+            
+            function getPos(e) {
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: clientX - rect.left,
+                    y: clientY - rect.top
+                };
+            }
+            
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+            
+            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e); });
+            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e); });
+            canvas.addEventListener('touchend', stopDrawing);
+        }
+
+        function setupColorPalette() {
+            const palette = document.getElementById('colorPalette');
+            palette.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    palette.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    gameState.canvas.color = btn.dataset.color;
+                    setTool('pen');
+                });
+            });
+        }
+
+        function setupBrushSizes() {
+            const sizes = document.querySelectorAll('.size-btn');
+            sizes.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    sizes.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    gameState.canvas.size = parseInt(btn.dataset.size);
+                });
+            });
+        }
+
+        function setTool(tool) {
+            gameState.canvas.tool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent === (tool === 'pen' ? '✏️' : '🧼')) {
+                    btn.classList.add('active');
                 }
             });
-
-            roomRef.update({
-                currentRound: newRound,
-                submissions: { ...room.submissions, [newRound]: {} },
-                roundData: { ...room.roundData, [newRound]: roundData }
-            });
-        }
-
-        // CANVAS
-        function initCanvas() {
-            GAME.canvas = document.getElementById('canvas');
-            GAME.ctx = GAME.canvas.getContext('2d');
-            GAME.ctx.fillStyle = 'white';
-            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
-            GAME.ctx.lineCap = 'round';
-            GAME.ctx.lineJoin = 'round';
-
-            GAME.canvas.addEventListener('mousedown', startDraw);
-            GAME.canvas.addEventListener('mousemove', draw);
-            GAME.canvas.addEventListener('mouseup', stopDraw);
-            GAME.canvas.addEventListener('mouseout', stopDraw);
-            GAME.canvas.addEventListener('touchstart', handleTouch, {passive: false});
-            GAME.canvas.addEventListener('touchmove', handleTouch, {passive: false});
-            GAME.canvas.addEventListener('touchend', stopDraw);
-        }
-
-        function getPos(e) {
-            const rect = GAME.canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches[0].clientY) - rect.top;
-            return {
-                x: x * (GAME.canvas.width / rect.width),
-                y: y * (GAME.canvas.height / rect.height)
-            };
-        }
-
-        function startDraw(e) {
-            GAME.isDrawing = true;
-            const pos = getPos(e);
-            GAME.ctx.beginPath();
-            GAME.ctx.moveTo(pos.x, pos.y);
-        }
-
-        function draw(e) {
-            if (!GAME.isDrawing) return;
-            const pos = getPos(e);
-            GAME.ctx.lineWidth = document.getElementById('brush-size').value;
-            GAME.ctx.strokeStyle = GAME.currentColor;
-            GAME.ctx.lineTo(pos.x, pos.y);
-            GAME.ctx.stroke();
-        }
-
-        function stopDraw() {
-            GAME.isDrawing = false;
-        }
-
-        function handleTouch(e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            const evt = { clientX: touch.clientX, clientY: touch.clientY };
-            if (e.type === 'touchstart') startDraw(evt);
-            else draw(evt);
-        }
-
-        function setColor(color) {
-            GAME.currentColor = color;
-            document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
         }
 
         function clearCanvas() {
-            GAME.ctx.fillStyle = 'white';
-            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            gameState.canvas.strokes = [];
         }
 
-        function startTimer(seconds, callback) {
-            let timeLeft = seconds;
-            const el = document.getElementById('draw-timer');
+        function undo() {
+            if (gameState.canvas.strokes.length === 0) return;
             
-            GAME.timer = setInterval(() => {
-                el.textContent = timeLeft;
-                if (timeLeft <= 10) el.classList.add('urgent');
+            gameState.canvas.strokes.pop();
+            redrawCanvas();
+        }
+
+        function redrawCanvas() {
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            gameState.canvas.strokes.forEach(stroke => {
+                ctx.beginPath();
+                ctx.lineWidth = stroke.size;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
                 
-                timeLeft--;
-                if (timeLeft < 0) {
-                    clearInterval(GAME.timer);
+                if (stroke.tool === 'eraser') {
+                    ctx.globalCompositeOperation = 'destination-out';
+                } else {
+                    ctx.globalCompositeOperation = 'source-over';
+                    ctx.strokeStyle = stroke.color;
+                }
+                
+                ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
+                stroke.points.forEach(point => {
+                    ctx.lineTo(point.x, point.y);
+                });
+                ctx.stroke();
+            });
+        }
+
+        function submitDrawing() {
+            const canvas = document.getElementById('drawingCanvas');
+            const drawingData = canvas.toDataURL('image/png');
+            
+            // Add to chain
+            const chainIndex = gameState.room.players.findIndex(p => p.id === gameState.player.id);
+            gameState.game.chains[chainIndex].items.push({
+                type: 'drawing',
+                content: drawingData,
+                author: gameState.player
+            });
+            
+            showWaitingScreen();
+        }
+
+        function showWritingScreen() {
+            showScreen('writingScreen');
+            
+            // Get drawing from chain
+            const chainIndex = gameState.room.players.findIndex(p => p.id === gameState.player.id);
+            const chain = gameState.game.chains[chainIndex];
+            const lastItem = chain.items[chain.items.length - 1];
+            
+            if (lastItem.type === 'drawing') {
+                document.getElementById('displayedDrawing').src = lastItem.content;
+            }
+            
+            document.getElementById('guessInput').value = '';
+            startTimer(60, 'writeTimer', submitGuess);
+        }
+
+        function submitGuess() {
+            const guess = document.getElementById('guessInput').value.trim();
+            if (!guess) {
+                alert('Skriv en gissning först!');
+                return;
+            }
+            
+            // Add to chain
+            const chainIndex = gameState.room.players.findIndex(p => p.id === gameState.player.id);
+            gameState.game.chains[chainIndex].items.push({
+                type: 'prompt',
+                content: guess,
+                author: gameState.player
+            });
+            
+            showWaitingScreen();
+        }
+
+        function showWaitingScreen() {
+            showScreen('waitingScreen');
+            
+            // Simulate waiting for other players
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        startRound();
+                    }, 500);
+                }
+                document.getElementById('waitProgress').style.width = progress + '%';
+                document.getElementById('waitStatus').textContent = 
+                    `${Math.floor(progress / 100 * gameState.room.players.length)} / ${gameState.room.players.length} klara`;
+            }, 500);
+        }
+
+        function startTimer(seconds, elementId, callback) {
+            gameState.game.timeLeft = seconds;
+            const timerEl = document.getElementById(elementId);
+            
+            if (gameState.game.timer) clearInterval(gameState.game.timer);
+            
+            gameState.game.timer = setInterval(() => {
+                gameState.game.timeLeft--;
+                timerEl.textContent = gameState.game.timeLeft;
+                
+                if (gameState.game.timeLeft <= 10) {
+                    timerEl.classList.add('warning');
+                }
+                
+                if (gameState.game.timeLeft <= 0) {
+                    clearInterval(gameState.game.timer);
                     callback();
                 }
             }, 1000);
         }
 
-        // UI HJÄLPFUNKTIONER
-        function updateLobbyStatus(msg, type) {
-            const el = document.getElementById('lobby-status');
-            el.textContent = msg;
-            el.className = 'status-message ' + type;
-        }
-
-        function updatePlayersList() {
-            const container = document.getElementById('players-list');
-            container.innerHTML = GAME.players.map(p => `
-                <div class="player-card ${p.id === GAME.myId ? 'you' : ''} ${p.isHost ? 'host' : ''}">
-                    <div class="avatar">${p.isHost ? '👑' : '🎨'}</div>
-                    <div style="font-weight: 600;">${p.name}</div>
-                    ${p.id === GAME.myId ? '<div style="font-size: 0.8rem; color: #667eea;">Du</div>' : ''}
-                </div>
-            `).join('');
-
-            if (GAME.isHost) {
-                const btn = document.getElementById('btn-start');
-                const others = GAME.players.filter(p => !p.isHost).length;
-                if (others >= 1) {
-                    btn.disabled = false;
-                    btn.textContent = `Starta spelet (${GAME.players.length} spelare)`;
-                } else {
-                    btn.disabled = true;
-                    btn.textContent = 'Väntar på minst 1 gäst...';
-                }
-            }
-        }
-
-        function showJoin() {
-            GAME.myName = document.getElementById('player-name').value.trim();
-            if (!GAME.myName) {
-                alert('Skriv ditt namn först!');
-                return;
-            }
-            showScreen('screen-join');
-        }
-
-        function showError(msg) {
-            const el = document.getElementById('join-error');
-            el.textContent = msg;
-            el.classList.remove('hidden');
-        }
-
-        function copyCode() {
-            navigator.clipboard.writeText(GAME.roomCode).then(() => {
-                alert('Kod kopierad: ' + GAME.roomCode);
-            });
-        }
-
-        function showResults(chains) {
-            showScreen('screen-results');
+        function showResults() {
+            showScreen('resultsScreen');
             
-            const container = document.getElementById('chains-container');
+            const container = document.getElementById('resultsContainer');
             container.innerHTML = '';
             
-            Object.entries(chains).forEach(([playerId, chain]) => {
-                const starter = GAME.players.find(p => p.id === playerId);
+            gameState.game.chains.forEach((chain, index) => {
+                const chainDiv = document.createElement('div');
+                chainDiv.className = 'chain-display fade-in';
                 
-                const div = document.createElement('div');
-                div.className = 'chain-result';
+                let html = `<h3 style="color: var(--primary); margin-bottom: 15px;">
+                    ${chain.owner.avatar} ${chain.owner.name}s kedja:
+                </h3>`;
                 
-                let html = `<h3 style="color: #764ba2; margin-bottom: 15px;">${starter?.name || 'Okänd'}s kedja</h3>`;
-                
-                chain.forEach((item, i) => {
-                    html += `<div class="chain-item">`;
-                    html += `<div class="author">${item.author} ${item.type === 'word' ? 'skrev' : item.type === 'drawing' ? 'ritade' : 'gissade'}</div>`;
-                    
-                    if (item.type === 'drawing') {
-                        html += `<img src="${item.content}" alt="Ritning">`;
+                chain.items.forEach((item, i) => {
+                    if (i === 0) {
+                        html += `<div class="chain-item">
+                            <span style="font-size: 2rem">✏️</span>
+                            <span class="chain-text">"${item.content}"</span>
+                            <span style="color: #999; font-size: 0.9rem">av ${item.author.name}</span>
+                        </div>`;
+                    } else if (item.type === 'drawing') {
+                        html += `<div style="text-align: center; margin: 10px 0;">
+                            <span class="chain-arrow">⬇️</span>
+                        </div>
+                        <div class="chain-item">
+                            <img src="${item.content}" class="chain-drawing" alt="Ritning">
+                            <span style="color: #999; font-size: 0.9rem; margin-left: auto;">av ${item.author.name}</span>
+                        </div>`;
                     } else {
-                        html += `<div style="font-size: 1.2rem;">"${item.content}"</div>`;
-                    }
-                    
-                    html += `</div>`;
-                    
-                    if (i < chain.length - 1) {
-                        html += `<div class="arrow">⬇️</div>`;
+                        html += `<div style="text-align: center; margin: 10px 0;">
+                            <span class="chain-arrow">⬇️</span>
+                        </div>
+                        <div class="chain-item">
+                            <span style="font-size: 2rem">💭</span>
+                            <span class="chain-text">"${item.content}"</span>
+                            <span style="color: #999; font-size: 0.9rem">av ${item.author.name}</span>
+                        </div>`;
                     }
                 });
                 
-                div.innerHTML = html;
-                container.appendChild(div);
+                chainDiv.innerHTML = html;
+                container.appendChild(chainDiv);
             });
         }
 
-        console.log('DrawPhone laddad!');
+        function playAgain() {
+            gameState.game.currentRound = 0;
+            gameState.game.chains = [];
+            
+            // Reset chains
+            gameState.room.players.forEach((player, index) => {
+                gameState.game.chains.push({
+                    owner: player,
+                    items: [{
+                        type: 'prompt',
+                        content: samplePrompts[Math.floor(Math.random() * samplePrompts.length)],
+                        author: player
+                    }]
+                });
+            });
+            
+            startRound();
+        }
+
+        function backToLobby() {
+            showScreen('lobbyScreen');
+        }
+
+        // Prevent accidental navigation
+        window.addEventListener('beforeunload', (e) => {
+            if (document.getElementById('drawingScreen').classList.contains('active') ||
+                document.getElementById('writingScreen').classList.contains('active')) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
     </script>
 </body>
 </html>
