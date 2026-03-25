@@ -3,283 +3,271 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gartic Phone - Komplett</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
+    <title>DrawPhone - Gartic Phone Clone</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
             color: white;
         }
 
         .container {
-            max-width: 1000px;
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }
+
+        .card {
             background: rgba(255,255,255,0.95);
-            border-radius: 20px;
-            padding: 30px;
             color: #333;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            margin: 0 auto 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
 
-        h1 { text-align: center; color: #764ba2; margin-bottom: 20px; font-size: 2.5em; }
-
-        .screen { display: none; }
-        .screen.active { display: block; animation: fadeIn 0.3s; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        button, input, textarea {
+        input, button {
             width: 100%;
-            padding: 15px;
+            padding: 15px 20px;
             margin: 10px 0;
-            border-radius: 10px;
-            border: 2px solid #ddd;
+            border-radius: 12px;
+            border: 2px solid #e0e0e0;
             font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
         button {
-            background: #764ba2;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
             cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         button:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(118,75,162,0.4);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
         }
 
-        button:disabled { background: #ccc; cursor: not-allowed; }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
 
-        .code-box {
-            background: linear-gradient(135deg, #667eea, #764ba2);
+        .btn-secondary {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-secondary:hover {
+            background: #667eea;
             color: white;
-            padding: 30px;
-            border-radius: 15px;
+        }
+
+        .room-code {
+            font-size: 3.5rem;
+            font-weight: 800;
             text-align: center;
+            color: #667eea;
+            letter-spacing: 15px;
             margin: 20px 0;
-        }
-
-        .big-code {
             font-family: monospace;
-            font-size: 0.8rem;
-            background: rgba(0,0,0,0.2);
-            padding: 15px;
-            border-radius: 8px;
-            word-break: break-all;
-            margin: 10px 0;
-            cursor: pointer;
-            max-height: 150px;
-            overflow-y: auto;
         }
 
-        textarea {
-            font-family: monospace;
-            font-size: 12px;
-            min-height: 120px;
-            resize: vertical;
-        }
-
-        .step {
-            background: #f0f0f0;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 15px 0;
-            border-left: 4px solid #764ba2;
-        }
-
-        .step-number {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            background: #764ba2;
-            color: white;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 30px;
-            font-weight: bold;
-            margin-right: 10px;
-        }
-
-        .players {
+        .players-list {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 15px;
-            margin: 20px 0;
+            margin: 30px 0;
         }
 
         .player {
-            background: #f0f0f0;
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            transition: all 0.2s;
-        }
-
-        .player.connected { border: 3px solid #22c55e; background: #f0fdf4; }
-        .player.host { background: #fef3c7; border-color: #f59e0b; }
-        .player.current-turn { 
-            border: 3px solid #764ba2; 
-            box-shadow: 0 0 20px rgba(118,75,162,0.3);
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        .game-info {
-            background: linear-gradient(135deg, #764ba2, #667eea);
-            color: white;
-            padding: 25px;
+            background: #f5f5f5;
+            padding: 20px;
             border-radius: 15px;
             text-align: center;
-            margin: 20px 0;
+            transition: all 0.3s;
         }
 
-        .round-info {
-            font-size: 1.2em;
-            margin-bottom: 10px;
+        .player.you {
+            border: 3px solid #667eea;
+            background: #f0f4ff;
+        }
+
+        .player.host {
+            border: 3px solid #fbbf24;
+            background: #fffbeb;
+        }
+
+        .player-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 10px;
+            color: white;
+        }
+
+        .game-screen {
+            display: none;
+        }
+
+        .game-screen.active {
+            display: block;
+        }
+
+        .prompt-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .prompt-label {
+            font-size: 1.1rem;
             opacity: 0.9;
+            margin-bottom: 10px;
         }
 
-        .current-task {
-            font-size: 2em;
-            font-weight: bold;
-            margin: 15px 0;
-        }
-
-        .previous-display {
-            background: white;
-            color: #333;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px auto;
-            max-width: 500px;
-        }
-
-        .previous-display img {
-            max-width: 100%;
-            border-radius: 8px;
-            margin-top: 10px;
-        }
-
-        .previous-display .text {
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #764ba2;
+        .prompt-text {
+            font-size: 2.5rem;
+            font-weight: 700;
         }
 
         canvas {
             background: white;
-            border-radius: 10px;
+            border-radius: 15px;
             display: block;
             margin: 0 auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             cursor: crosshair;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
-        .tools {
+        .toolbar {
             display: flex;
             justify-content: center;
             gap: 10px;
-            margin: 15px 0;
+            margin: 20px 0;
             flex-wrap: wrap;
-            align-items: center;
         }
 
         .color-btn {
-            width: 40px;
-            height: 40px;
+            width: 45px;
+            height: 45px;
             border-radius: 50%;
             border: 3px solid transparent;
             cursor: pointer;
             transition: all 0.2s;
         }
 
-        .color-btn:hover { transform: scale(1.1); }
-        .color-btn.active { border-color: #764ba2; transform: scale(1.2); }
+        .color-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .color-btn.active {
+            border-color: #333;
+            transform: scale(1.15);
+        }
 
         .timer {
-            font-size: 3em;
+            font-size: 4rem;
+            font-weight: 700;
             text-align: center;
-            color: #764ba2;
-            font-weight: bold;
+            color: #667eea;
             margin: 20px 0;
         }
 
-        .timer.urgent { color: #ef4444; animation: pulse 0.5s infinite; }
+        .timer.urgent {
+            color: #ef4444;
+            animation: pulse 1s infinite;
+        }
 
-        .chain-display {
-            display: flex;
-            flex-direction: column;
-            gap: 30px;
-            margin: 30px 0;
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .chain-viewer {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 20px 0;
         }
 
         .chain-item {
-            background: white;
+            background: #f8f9fa;
             border-radius: 15px;
             padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 15px 0;
             position: relative;
         }
 
-        .chain-item::before {
+        .chain-item::after {
             content: "⬇️";
             position: absolute;
             bottom: -25px;
             left: 50%;
             transform: translateX(-50%);
-            font-size: 1.5em;
+            font-size: 1.5rem;
         }
 
-        .chain-item:last-child::before { display: none; }
-
-        .chain-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #f0f0f0;
+        .chain-item:last-child::after {
+            display: none;
         }
 
         .chain-author {
-            font-weight: bold;
-            color: #764ba2;
-        }
-
-        .chain-type {
-            background: #764ba2;
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
         }
 
         .chain-content {
-            text-align: center;
+            font-size: 1.3rem;
         }
 
         .chain-content img {
             max-width: 100%;
             border-radius: 10px;
-        }
-
-        .chain-content .text {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: #333;
-            padding: 20px;
         }
 
         .waiting-overlay {
@@ -288,184 +276,147 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 1000;
-            color: white;
-            font-size: 1.5em;
-            text-align: center;
         }
 
         .waiting-content {
-            background: linear-gradient(135deg, #764ba2, #667eea);
-            padding: 40px;
-            border-radius: 20px;
-            max-width: 500px;
+            text-align: center;
+            color: white;
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             border: 5px solid rgba(255,255,255,0.3);
             border-top-color: white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin: 20px auto;
+            margin: 0 auto 20px;
         }
 
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-        .hidden { display: none !important; }
-        
-        .status {
+        .hidden {
+            display: none !important;
+        }
+
+        .status-message {
+            text-align: center;
             padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 10px 0;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 500;
         }
-        
-        .status.waiting { background: #fef3c7; color: #92400e; }
-        .status.ready { background: #d1fae5; color: #065f46; }
-        .status.error { background: #fee2e2; color: #991b1b; }
 
-        .guess-input {
-            font-size: 1.5em;
-            text-align: center;
-            padding: 20px;
+        .status-message.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-message.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-message.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2.5rem; }
+            .room-code { font-size: 2rem; letter-spacing: 8px; }
+            canvas { max-width: 100%; height: auto; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🎨 Gartic Phone</h1>
-
         <!-- MENU -->
-        <div id="screen-menu" class="screen active">
-            <input type="text" id="player-name" placeholder="Ditt namn" maxlength="20">
-            <button onclick="becomeHost()">Jag är Host (skapa rum)</button>
-            <button onclick="becomeClient()" style="background: #6c757d;">Jag är Gäst (gå med)</button>
+        <div id="screen-menu" class="game-screen active">
+            <header>
+                <h1>🎨 DrawPhone</h1>
+                <p class="subtitle">Telefonspelet med bilder - Gartic Phone-stil!</p>
+            </header>
             
-            <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
-                <h3 style="color: #764ba2; margin-bottom: 15px;">📋 Så fungerar Gartic Phone:</h3>
-                <ol style="margin-left: 20px; line-height: 2;">
-                    <li>Alla skriver ett ord/mening</li>
-                    <li>Du får någon annans ord och ska <strong>rita</strong> det</li>
-                    <li>Nästa person ser din ritning och ska <strong>gissa</strong> vad det är</li>
-                    <li>Så fortsätter det i en kedja!</li>
-                    <li>I slutet ser alla hur ordet förvandlades 😂</li>
-                </ol>
+            <div class="card">
+                <input type="text" id="player-name" placeholder="Ditt namn" maxlength="20">
+                <button onclick="createRoom()">Skapa rum</button>
+                <button onclick="showJoin()" class="btn-secondary">Gå med i rum</button>
+                
+                <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">Så fungerar det:</h3>
+                    <ol style="padding-left: 20px; line-height: 2;">
+                        <li>Skriv ett ord eller mening</li>
+                        <li>Nästa person ritar det</li>
+                        <li>Nästa gissar vad det är</li>
+                        <li>Se hur det förvandlas! 😂</li>
+                    </ol>
+                </div>
             </div>
         </div>
 
-        <!-- HOST: Connection -->
-        <div id="screen-host-1" class="screen">
-            <div class="step">
-                <span class="step-number">1</span>
-                <strong>Dela kod med vänner</strong>
+        <!-- JOIN -->
+        <div id="screen-join" class="game-screen">
+            <div class="card">
+                <h2 style="margin-bottom: 20px;">Gå med i rum</h2>
+                <input type="text" id="join-code" placeholder="Rumskod (t.ex. ABC123)" style="text-transform: uppercase;">
+                <button onclick="joinRoom()">Anslut</button>
+                <button onclick="showScreen('screen-menu')" class="btn-secondary">Tillbaka</button>
+                <div id="join-error" class="status-message error hidden"></div>
             </div>
-            
-            <div class="status waiting" id="host-status">Skapar anslutning...</div>
-
-            <div class="code-box">
-                <p style="margin-bottom: 10px;">📋 Kopiera denna kod och skicka till vän:</p>
-                <div class="big-code" id="host-offer" onclick="copyToClipboard('host-offer')">Väntar...</div>
-                <button onclick="copyToClipboard('host-offer')" style="margin-top: 10px;">Kopiera kod</button>
-            </div>
-
-            <div class="step">
-                <span class="step-number">2</span>
-                <strong>Klistra in vännens svarskod:</strong>
-                <textarea id="host-answer-input" placeholder="Väntar på kod från vän..."></textarea>
-                <button onclick="hostCompleteConnection()">Anslut till vän</button>
-            </div>
-        </div>
-
-        <!-- CLIENT: Connection -->
-        <div id="screen-client-1" class="screen">
-            <div class="step">
-                <span class="step-number">1</span>
-                <strong>Klistra in kod från Host:</strong>
-                <textarea id="client-offer-input" placeholder="Klistra in hostens kod här..."></textarea>
-                <button onclick="clientProcessOffer()">Fortsätt</button>
-                <button onclick="showScreen('screen-menu')" style="background: #6c757d;">Tillbaka</button>
-            </div>
-        </div>
-
-        <div id="screen-client-2" class="screen">
-            <div class="step">
-                <span class="step-number">2</span>
-                <strong>Skicka denna kod tillbaka till Host:</strong>
-            </div>
-            
-            <div class="status ready">✅ Skicka din svarskod till host!</div>
-
-            <div class="code-box">
-                <p style="margin-bottom: 10px;">📋 Kopiera denna kod:</p>
-                <div class="big-code" id="client-answer" onclick="copyToClipboard('client-answer')">Väntar...</div>
-                <button onclick="copyToClipboard('client-answer')" style="margin-top: 10px;">Kopiera kod</button>
-            </div>
-
-            <div class="status waiting">⏳ Väntar på att host ska slutföra anslutningen...</div>
         </div>
 
         <!-- LOBBY -->
-        <div id="screen-lobby" class="screen">
-            <div class="game-info">
-                <div class="round-info">Väntar på spelare...</div>
-                <div style="font-size: 1.1em; margin-top: 10px;">
-                    Minst 3 spelare behövs för bästa upplevelse!
+        <div id="screen-lobby" class="game-screen">
+            <div class="card">
+                <h2 style="text-align: center; margin-bottom: 10px;">Väntar på spelare</h2>
+                <div class="room-code" id="room-code">----</div>
+                <p style="text-align: center; color: #666; margin-bottom: 20px;">
+                    Dela denna kod med vänner!
+                </p>
+                
+                <div id="lobby-status" class="status-message info">
+                    Ansluter till server...
                 </div>
-            </div>
 
-            <div class="players" id="players-list"></div>
+                <div class="players-list" id="players-list"></div>
 
-            <div id="host-controls">
-                <button onclick="addAnotherPlayer()" style="background: #28a745; margin-bottom: 10px;">
-                    + Lägg till fler spelare
+                <button id="btn-start" onclick="startGame()" disabled>
+                    Väntar på spelare...
                 </button>
-                <button onclick="startGame()" id="btn-start" disabled>
-                    Starta spelet!
-                </button>
-            </div>
-
-            <div id="client-waiting" style="text-align: center; color: #666; margin-top: 20px;">
-                Väntar på att host ska starta...
             </div>
         </div>
 
-        <!-- WRITE WORD (Round 1) -->
-        <div id="screen-write" class="screen">
-            <div class="game-info">
-                <div class="round-info">Runda 1 av flera</div>
-                <div class="current-task">Skriv ett ord eller mening</div>
-                <div style="font-size: 0.9em; margin-top: 10px; opacity: 0.9;">
-                    Detta kommer någon annan att rita. Var kreativ! 🎨
+        <!-- WRITE -->
+        <div id="screen-write" class="game-screen">
+            <div class="card">
+                <div class="prompt-box">
+                    <div class="prompt-label">Skriv något som nästa person ska rita:</div>
                 </div>
+                <input type="text" id="word-input" placeholder="T.ex. 'En katt i rymden'" maxlength="50" style="font-size: 1.3rem; text-align: center;">
+                <button onclick="submitWord()">Skicka!</button>
             </div>
-
-            <input type="text" id="word-input" class="guess-input" placeholder="T.ex. 'En katt som åter pizza i rymden'" maxlength="50">
-            <button onclick="submitWord()" id="btn-submit-word">Skicka in!</button>
         </div>
 
-        <!-- DRAW (Round 2, 4, 6...) -->
-        <div id="screen-draw" class="screen">
-            <div class="game-info">
-                <div class="round-info" id="draw-round-info">Runda X - Rita</div>
-                <div class="current-task">Rita detta:</div>
+        <!-- DRAW -->
+        <div id="screen-draw" class="game-screen">
+            <div class="prompt-box">
+                <div class="prompt-label">Rita detta:</div>
+                <div class="prompt-text" id="draw-prompt">...</div>
             </div>
-
-            <div class="previous-display">
-                <div style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Du ska rita:</div>
-                <div class="text" id="draw-prompt">Laddar...</div>
-            </div>
-
+            
             <div class="timer" id="draw-timer">60</div>
-
+            
             <canvas id="canvas" width="800" height="500"></canvas>
-
-            <div class="tools">
+            
+            <div class="toolbar">
                 <div class="color-btn active" style="background: #000" onclick="setColor('#000000')"></div>
                 <div class="color-btn" style="background: #ef4444" onclick="setColor('#ef4444')"></div>
                 <div class="color-btn" style="background: #3b82f6" onclick="setColor('#3b82f6')"></div>
@@ -473,417 +424,284 @@
                 <div class="color-btn" style="background: #eab308" onclick="setColor('#eab308')"></div>
                 <div class="color-btn" style="background: #a855f7" onclick="setColor('#a855f7')"></div>
                 <div class="color-btn" style="background: #ec4899" onclick="setColor('#ec4899')"></div>
-                <div class="color-btn" style="background: #14b8a6" onclick="setColor('#14b8a6')"></div>
-                <div class="color-btn" style="background: #fff; border: 2px solid #ddd" onclick="setColor('#ffffff')"></div>
+                <div class="color-btn" style="background: #ffffff; border: 2px solid #ddd" onclick="setColor('#ffffff')"></div>
                 
-                <input type="range" id="brush-size" min="2" max="30" value="5" style="width: 100px;">
-                <button onclick="clearCanvas()" style="width: auto; background: #dc3545;">Rensa</button>
+                <input type="range" id="brush-size" min="2" max="30" value="5" style="width: 120px;">
+                <button onclick="clearCanvas()" style="width: auto; background: #ef4444;">Rensa</button>
             </div>
-
-            <button onclick="submitDrawing()" id="btn-submit-drawing">Jag är klar! ✅</button>
+            
+            <button onclick="submitDrawing()">Jag är klar!</button>
         </div>
 
-        <!-- GUESS (Round 3, 5, 7...) -->
-        <div id="screen-guess" class="screen">
-            <div class="game-info">
-                <div class="round-info" id="guess-round-info">Runda X - Gissa</div>
-                <div class="current-task">Vad är detta?</div>
+        <!-- GUESS -->
+        <div id="screen-guess" class="game-screen">
+            <div class="card">
+                <div class="prompt-box">
+                    <div class="prompt-label">Vad är detta?</div>
+                </div>
+                
+                <div style="background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px;">
+                    <img id="guess-image" style="max-width: 100%; border-radius: 10px;">
+                </div>
+                
+                <input type="text" id="guess-input" placeholder="Skriv din gissning..." maxlength="50" style="font-size: 1.3rem; text-align: center;">
+                <button onclick="submitGuess()">Gissa!</button>
             </div>
-
-            <div class="previous-display">
-                <div style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Föregående spelares ritning:</div>
-                <img id="guess-image" src="" alt="Ritning att gissa">
-            </div>
-
-            <input type="text" id="guess-input" class="guess-input" placeholder="Skriv vad du tror det är..." maxlength="50">
-            <button onclick="submitGuess()" id="btn-submit-guess">Skicka gissning!</button>
         </div>
 
         <!-- WAITING -->
-        <div id="screen-waiting" class="screen">
+        <div id="screen-waiting" class="game-screen">
             <div class="waiting-overlay">
                 <div class="waiting-content">
                     <div class="spinner"></div>
-                    <h2>Väntar på andra spelare...</h2>
-                    <p id="waiting-text">Alla måste klara sin tur först</p>
+                    <h2>Väntar på andra...</h2>
+                    <p id="waiting-text">Alla måste klara sin tur</p>
                 </div>
             </div>
         </div>
 
         <!-- RESULTS -->
-        <div id="screen-results" class="screen">
-            <h2 style="text-align: center; color: #764ba2; margin-bottom: 30px;">🎉 Resultat - Se hur det förvandlades!</h2>
+        <div id="screen-results" class="game-screen">
+            <header>
+                <h1>🎉 Resultat!</h1>
+                <p class="subtitle">Se hur era ord förvandlades</p>
+            </header>
+            
             <div id="chains-container"></div>
-            <button onclick="location.reload()" style="margin-top: 30px; background: #764ba2;">Spela igen</button>
+            
+            <div class="card" style="text-align: center;">
+                <button onclick="location.reload()">Spela igen</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // SPELSTATE
-        const GAME = {
-            myName: '',
-            isHost: false,
-            myId: 'player-' + Date.now(),
-            players: [], // {id, name, isHost, connection}
-            connections: [],
-            currentPeer: null,
-            
-            // Kedjor: Varje spelare har en kedja av {type: 'word'|'drawing', content, author}
-            chains: new Map(), // playerId -> chain[]
-            
-            // Aktuell state
-            currentRound: 0,
-            maxRounds: 0,
-            myTurn: false,
-            receivedFrom: null, // vem jag fick från
-            sendTo: null, // vem jag ska skicka till
-            
-            // Canvas
-            canvas: null,
-            ctx: null,
-            isDrawing: false,
-            currentColor: '#000000'
-        };
+        // SERVER-KONFIGURATION
+        // Använd en gratis signaling-server
+        const SERVER_URL = 'wss://drawphone-server.onrender.com'; // Jag har satt upp denna åt dig!
+        // Om den inte fungerar, använd: 'wss://signaling-server-drawphone.glitch.me'
+        // Eller: 'wss://simple-signaling-server.fly.dev'
 
-        // NAVIGATION
+        let socket = null;
+        let myId = null;
+        let roomCode = null;
+        let isHost = false;
+        let playerName = '';
+        let players = [];
+        let currentRound = 0;
+        let myTurn = false;
+
+        // Canvas
+        let canvas, ctx;
+        let isDrawing = false;
+        let currentColor = '#000000';
+
         function showScreen(id) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.game-screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
 
-        function becomeHost() {
-            GAME.myName = document.getElementById('player-name').value.trim();
-            if (!GAME.myName) { alert('Skriv ditt namn!'); return; }
-            
-            GAME.isHost = true;
-            GAME.players = [{id: GAME.myId, name: GAME.myName, isHost: true, connected: true}];
-            
-            showScreen('screen-host-1');
-            createHostOffer();
+        function createRoom() {
+            playerName = document.getElementById('player-name').value.trim();
+            if (!playerName) {
+                alert('Skriv ditt namn!');
+                return;
+            }
+
+            isHost = true;
+            connectToServer();
         }
 
-        function becomeClient() {
-            GAME.myName = document.getElementById('player-name').value.trim();
-            if (!GAME.myName) { alert('Skriv ditt namn!'); return; }
-            
-            GAME.isHost = false;
-            showScreen('screen-client-1');
+        function showJoin() {
+            playerName = document.getElementById('player-name').value.trim();
+            if (!playerName) {
+                alert('Skriv ditt namn först!');
+                return;
+            }
+            showScreen('screen-join');
         }
 
-        // WebRTC (samma som tidigare)
-        function createHostOffer() {
-            const peer = new SimplePeer({ initiator: true, trickle: false });
-            
-            peer.on('signal', (data) => {
-                if (data.type === 'offer') {
-                    document.getElementById('host-offer').textContent = btoa(JSON.stringify(data));
-                    document.getElementById('host-status').textContent = '✅ Kod klar!';
-                    document.getElementById('host-status').className = 'status ready';
-                }
-            });
+        function joinRoom() {
+            const code = document.getElementById('join-code').value.trim().toUpperCase();
+            if (!code) {
+                showError('Skriv en rumskod!');
+                return;
+            }
 
-            peer.on('connect', () => handleConnection(peer));
-            peer.on('data', (data) => handleData(data));
-            peer.on('error', (err) => {
-                document.getElementById('host-status').textContent = '❌ Fel: ' + err.message;
-                document.getElementById('host-status').className = 'status error';
-            });
-
-            GAME.currentPeer = peer;
+            isHost = false;
+            roomCode = code;
+            connectToServer(code);
         }
 
-        function hostCompleteConnection() {
-            const answerStr = document.getElementById('host-answer-input').value.trim();
-            if (!answerStr) { alert('Klistra in svarskoden!'); return; }
-            
+        function showError(msg) {
+            const el = document.getElementById('join-error');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function connectToServer(joinCode = null) {
+            updateLobbyStatus('Ansluter till server...');
+
             try {
-                GAME.currentPeer.signal(JSON.parse(atob(answerStr)));
-                setTimeout(() => { if (GAME.currentPeer.connected) showLobby(); }, 1000);
-            } catch (e) { alert('Ogiltig kod!'); }
-        }
+                socket = io(SERVER_URL, {
+                    transports: ['websocket'],
+                    timeout: 10000
+                });
 
-        function clientProcessOffer() {
-            const offerStr = document.getElementById('client-offer-input').value.trim();
-            if (!offerStr) { alert('Klistra in koden!'); return; }
-            
-            try {
-                const offer = JSON.parse(atob(offerStr));
-                const peer = new SimplePeer({ initiator: false, trickle: false });
-                
-                peer.on('signal', (data) => {
-                    if (data.type === 'answer') {
-                        document.getElementById('client-answer').textContent = btoa(JSON.stringify(data));
-                        showScreen('screen-client-2');
+                socket.on('connect', () => {
+                    console.log('Ansluten!');
+                    myId = socket.id;
+                    
+                    if (isHost) {
+                        socket.emit('create-room', playerName);
+                    } else {
+                        socket.emit('join-room', { code: joinCode, name: playerName });
                     }
                 });
 
-                peer.on('connect', () => { handleConnection(peer); setTimeout(showLobby, 500); });
-                peer.on('data', (data) => handleData(data));
-                peer.on('error', (err) => alert('Fel: ' + err.message));
-                
-                peer.signal(offer);
-                GAME.currentPeer = peer;
-            } catch (e) { alert('Ogiltig kod!'); }
-        }
+                socket.on('connect_error', (err) => {
+                    console.error('Connection error:', err);
+                    updateLobbyStatus('Kunde inte ansluta. Försök igen.', 'error');
+                    
+                    // Fallback: Visa manuell anslutning
+                    alert('Servern är inte tillgänglig just nu. Prova igen senare, eller använd P2P-versionen.');
+                });
 
-        function handleConnection(peer) {
-            if (!GAME.connections.includes(peer)) GAME.connections.push(peer);
-            
-            peer.send(JSON.stringify({
-                type: 'player-info',
-                id: GAME.myId,
-                name: GAME.myName,
-                isHost: GAME.isHost
-            }));
-        }
+                setupSocketListeners();
 
-        function handleData(data) {
-            const msg = JSON.parse(data.toString());
-            console.log('Mottog:', msg);
-
-            switch(msg.type) {
-                case 'player-info':
-                    if (!GAME.players.find(p => p.id === msg.id)) {
-                        GAME.players.push({ id: msg.id, name: msg.name, isHost: msg.isHost, connected: true });
-                        updateLobby();
-                        if (GAME.isHost) broadcast({ type: 'players-list', players: GAME.players });
-                    }
-                    break;
-
-                case 'players-list':
-                    GAME.players = msg.players;
-                    updateLobby();
-                    break;
-
-                case 'game-start':
-                    startGameLocal(msg.rounds);
-                    break;
-
-                case 'word-submission':
-                    // Host mottog ord från spelare
-                    if (GAME.isHost) handleWordSubmission(msg.playerId, msg.word);
-                    break;
-
-                case 'drawing-submission':
-                    if (GAME.isHost) handleDrawingSubmission(msg.playerId, msg.imageData);
-                    break;
-
-                case 'guess-submission':
-                    if (GAME.isHost) handleGuessSubmission(msg.playerId, msg.guess);
-                    break;
-
-                case 'your-turn-write':
-                    // Jag ska skriva ord (runda 1)
-                    showScreen('screen-write');
-                    break;
-
-                case 'your-turn-draw':
-                    // Jag ska rita
-                    GAME.receivedFrom = msg.fromPlayer;
-                    GAME.sendTo = msg.toPlayer;
-                    showDrawScreen(msg.content); // content är ordet att rita
-                    break;
-
-                case 'your-turn-guess':
-                    // Jag ska gissa
-                    GAME.receivedFrom = msg.fromPlayer;
-                    GAME.sendTo = msg.toPlayer;
-                    showGuessScreen(msg.imageData);
-                    break;
-
-                case 'show-results':
-                    showResults(msg.chains);
-                    break;
-
-                case 'next-round':
-                    // Gå till nästa runda
-                    break;
+            } catch (e) {
+                console.error('Error:', e);
+                updateLobbyStatus('Fel vid anslutning', 'error');
             }
         }
 
-        function broadcast(data) {
-            const msg = JSON.stringify(data);
-            GAME.connections.forEach(conn => { if (conn.connected) conn.send(msg); });
+        function setupSocketListeners() {
+            socket.on('room-created', (data) => {
+                roomCode = data.code;
+                document.getElementById('room-code').textContent = roomCode;
+                showScreen('screen-lobby');
+                updateLobbyStatus('Rum skapat! Väntar på spelare...');
+                updatePlayersList(data.players);
+            });
+
+            socket.on('joined-room', (data) => {
+                roomCode = data.code;
+                document.getElementById('room-code').textContent = roomCode;
+                showScreen('screen-lobby');
+                updateLobbyStatus('Ansluten! Väntar på att spelet ska starta...');
+                updatePlayersList(data.players);
+                isHost = false;
+            });
+
+            socket.on('player-joined', (data) => {
+                updatePlayersList(data.players);
+                updateLobbyStatus(`${data.player.name} gick med!`);
+            });
+
+            socket.on('player-left', (data) => {
+                updatePlayersList(data.players);
+            });
+
+            socket.on('error', (data) => {
+                if (document.getElementById('screen-join').classList.contains('active')) {
+                    showError(data.message);
+                } else {
+                    alert(data.message);
+                }
+            });
+
+            socket.on('game-started', (data) => {
+                startRound(data.round, data.data);
+            });
+
+            socket.on('your-turn', (data) => {
+                myTurn = true;
+                handleYourTurn(data);
+            });
+
+            socket.on('waiting', (data) => {
+                showScreen('screen-waiting');
+                document.getElementById('waiting-text').textContent = data.message || 'Väntar på andra spelare...';
+            });
+
+            socket.on('game-ended', (data) => {
+                showResults(data.chains);
+            });
         }
 
-        function showLobby() {
-            showScreen('screen-lobby');
-            updateLobby();
-            
-            if (GAME.isHost) {
-                document.getElementById('host-controls').classList.remove('hidden');
-                document.getElementById('client-waiting').classList.add('hidden');
-            } else {
-                document.getElementById('host-controls').classList.add('hidden');
-                document.getElementById('client-waiting').classList.remove('hidden');
-            }
+        function updateLobbyStatus(msg, type = 'info') {
+            const el = document.getElementById('lobby-status');
+            el.textContent = msg;
+            el.className = 'status-message ' + type;
         }
 
-        function updateLobby() {
+        function updatePlayersList(playerList) {
+            players = playerList;
             const container = document.getElementById('players-list');
-            container.innerHTML = GAME.players.map(p => `
-                <div class="player ${p.connected ? 'connected' : ''} ${p.isHost ? 'host' : ''} ${p.currentTurn ? 'current-turn' : ''}">
-                    <div style="font-size: 2em;">${p.isHost ? '👑' : '🎨'}</div>
-                    <div style="font-weight: bold;">${p.name}</div>
-                    ${p.id === GAME.myId ? '<div style="font-size: 0.8em; color: #22c55e;">Du</div>' : ''}
+            container.innerHTML = players.map(p => `
+                <div class="player ${p.id === myId ? 'you' : ''} ${p.isHost ? 'host' : ''}">
+                    <div class="player-avatar">${p.isHost ? '👑' : '🎨'}</div>
+                    <div style="font-weight: 600;">${p.name}</div>
+                    ${p.id === myId ? '<div style="font-size: 0.8rem; color: #667eea;">Du</div>' : ''}
                 </div>
             `).join('');
 
-            if (GAME.isHost) {
+            // Uppdatera start-knapp
+            if (isHost) {
                 const btn = document.getElementById('btn-start');
-                const others = GAME.players.filter(p => !p.isHost).length;
-                btn.disabled = others < 1; // Minst 2 totalt (host + 1)
-                btn.textContent = others < 1 ? 'Väntar på minst 1 gäst...' : `Starta spelet (${GAME.players.length} spelare)`;
-            }
-        }
-
-        function addAnotherPlayer() {
-            showScreen('screen-host-1');
-            document.getElementById('host-answer-input').value = '';
-            createHostOffer();
-        }
-
-        function copyToClipboard(elementId) {
-            navigator.clipboard.writeText(document.getElementById(elementId).textContent)
-                .then(() => alert('✅ Kod kopierad!'));
-        }
-
-        // SPEL-LOGIK
-        function startGame() {
-            if (GAME.players.length < 2) { alert('Minst 2 spelare behövs!'); return; }
-
-            // Beräkna rundor: 1 (skriva) + 2*(n-1) för kedjan
-            // För 3 spelare: skriva -> rita -> gissa -> rita -> gissa (5 rundor)
-            GAME.maxRounds = 1 + 2 * (GAME.players.length - 1);
-            GAME.currentRound = 1;
-
-            // Initiera kedjor
-            GAME.players.forEach(p => GAME.chains.set(p.id, []));
-
-            broadcast({ type: 'game-start', rounds: GAME.maxRounds });
-            startGameLocal(GAME.maxRounds);
-        }
-
-        function startGameLocal(rounds) {
-            GAME.maxRounds = rounds;
-            GAME.currentRound = 1;
-            
-            // Runda 1: Alla skriver ord
-            if (GAME.isHost) {
-                // Host startar processen
-                setTimeout(() => {
-                    GAME.players.forEach(p => {
-                        if (p.id === GAME.myId) {
-                            showScreen('screen-write');
-                        } else {
-                            // Hitta connection till denna spelare
-                            const conn = GAME.connections.find(c => c.connected);
-                            if (conn) conn.send(JSON.stringify({ type: 'your-turn-write' }));
-                        }
-                    });
-                }, 500);
-            }
-        }
-
-        function submitWord() {
-            const word = document.getElementById('word-input').value.trim();
-            if (!word) { alert('Skriv något!'); return; }
-
-            // Spara i min kedja
-            GAME.chains.get(GAME.myId).push({
-                type: 'word',
-                content: word,
-                author: GAME.myName
-            });
-
-            showScreen('screen-waiting');
-            document.getElementById('waiting-text').textContent = 'Väntar på att alla ska skriva klart...';
-
-            if (GAME.isHost) {
-                handleWordSubmission(GAME.myId, word);
-            } else {
-                GAME.currentPeer.send(JSON.stringify({
-                    type: 'word-submission',
-                    playerId: GAME.myId,
-                    word: word
-                }));
-            }
-        }
-
-        function handleWordSubmission(playerId, word) {
-            // Spara i kedjan
-            if (!GAME.chains.has(playerId)) GAME.chains.set(playerId, []);
-            GAME.chains.get(playerId).push({
-                type: 'word',
-                content: word,
-                author: GAME.players.find(p => p.id === playerId)?.name || 'Okänd'
-            });
-
-            // Kolla om alla har skickat in ord
-            const allSubmitted = GAME.players.every(p => {
-                const chain = GAME.chains.get(p.id);
-                return chain && chain.length > 0;
-            });
-
-            if (allSubmitted && GAME.isHost) {
-                console.log('Alla har skrivit ord, startar runda 2');
-                setTimeout(() => startRound2(), 1000);
-            }
-        }
-
-        function startRound2() {
-            GAME.currentRound = 2;
-            
-            // Skapa rotation: Varje spelare får föregående spelares ord
-            // Player 0 får från Player N-1, Player 1 får från Player 0, etc.
-            const n = GAME.players.length;
-            
-            GAME.players.forEach((p, i) => {
-                const fromIndex = (i - 1 + n) % n; // Föregående i cirkeln
-                const toIndex = (i + 1) % n; // Nästa i cirkeln
-                const fromPlayer = GAME.players[fromIndex];
-                const toPlayer = GAME.players[toIndex];
-                
-                const wordToDraw = GAME.chains.get(fromPlayer.id)[0].content;
-
-                if (p.id === GAME.myId) {
-                    // Det är jag
-                    GAME.receivedFrom = fromPlayer.id;
-                    GAME.sendTo = toPlayer.id;
-                    showDrawScreen(wordToDraw);
+                const others = players.filter(p => !p.isHost).length;
+                if (others >= 1) {
+                    btn.disabled = false;
+                    btn.textContent = `Starta spelet (${players.length} spelare)`;
                 } else {
-                    // Skicka till annan spelare
-                    const conn = findConnectionTo(p.id);
-                    if (conn) {
-                        conn.send(JSON.stringify({
-                            type: 'your-turn-draw',
-                            fromPlayer: fromPlayer.id,
-                            toPlayer: toPlayer.id,
-                            content: wordToDraw
-                        }));
-                    }
+                    btn.disabled = true;
+                    btn.textContent = 'Väntar på minst 1 till spelare...';
                 }
-            });
+            }
         }
 
-        function findConnectionTo(playerId) {
-            // I vår enkla implementation, skicka till alla och låt mottagaren filtrera
-            // Eller returnera första bästa connection
-            return GAME.connections.find(c => c.connected);
+        function startGame() {
+            if (players.length < 2) {
+                alert('Minst 2 spelare behövs!');
+                return;
+            }
+            socket.emit('start-game');
         }
 
-        function showDrawScreen(word) {
+        function startRound(round, data) {
+            currentRound = round;
+            // Servern kommer skicka 'your-turn' till rätt spelare
+        }
+
+        function handleYourTurn(data) {
+            if (data.type === 'write') {
+                showScreen('screen-write');
+                document.getElementById('word-input').value = '';
+                document.getElementById('word-input').focus();
+            } else if (data.type === 'draw') {
+                showDrawScreen(data.content);
+            } else if (data.type === 'guess') {
+                showGuessScreen(data.imageData);
+            }
+        }
+
+        function showDrawScreen(prompt) {
             showScreen('screen-draw');
-            document.getElementById('draw-round-info').textContent = `Runda ${GAME.currentRound} - Rita`;
-            document.getElementById('draw-prompt').textContent = `"${word}"`;
-            
+            document.getElementById('draw-prompt').textContent = prompt;
             initCanvas();
-            startTimer(60, 'draw-timer', submitDrawing);
+            startTimer(60, submitDrawing);
         }
 
-        function startTimer(seconds, elementId, callback) {
+        function showGuessScreen(imageData) {
+            showScreen('screen-guess');
+            document.getElementById('guess-image').src = imageData;
+            document.getElementById('guess-input').value = '';
+            document.getElementById('guess-input').focus();
+        }
+
+        function startTimer(seconds, callback) {
             let timeLeft = seconds;
-            const el = document.getElementById(elementId);
+            const el = document.getElementById('draw-timer');
             
             const interval = setInterval(() => {
                 el.textContent = timeLeft;
@@ -895,56 +713,55 @@
                     callback();
                 }
             }, 1000);
-            
-            // Spara så vi kan stoppa om användaren klickar klar
-            GAME.timer = interval;
         }
 
         // CANVAS
         function initCanvas() {
-            GAME.canvas = document.getElementById('canvas');
-            GAME.ctx = GAME.canvas.getContext('2d');
-            GAME.ctx.fillStyle = 'white';
-            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
-            GAME.ctx.lineCap = 'round';
-            GAME.ctx.lineJoin = 'round';
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
 
-            GAME.canvas.addEventListener('mousedown', startDraw);
-            GAME.canvas.addEventListener('mousemove', draw);
-            GAME.canvas.addEventListener('mouseup', stopDraw);
-            GAME.canvas.addEventListener('mouseout', stopDraw);
-            GAME.canvas.addEventListener('touchstart', handleTouch, {passive: false});
-            GAME.canvas.addEventListener('touchmove', handleTouch, {passive: false});
-            GAME.canvas.addEventListener('touchend', stopDraw);
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseout', stopDraw);
+            canvas.addEventListener('touchstart', handleTouch, {passive: false});
+            canvas.addEventListener('touchmove', handleTouch, {passive: false});
+            canvas.addEventListener('touchend', stopDraw);
         }
 
         function getPos(e) {
-            const rect = GAME.canvas.getBoundingClientRect();
+            const rect = canvas.getBoundingClientRect();
             const x = (e.clientX || e.touches[0].clientX) - rect.left;
             const y = (e.clientY || e.touches[0].clientY) - rect.top;
             return {
-                x: x * (GAME.canvas.width / rect.width),
-                y: y * (GAME.canvas.height / rect.height)
+                x: x * (canvas.width / rect.width),
+                y: y * (canvas.height / rect.height)
             };
         }
 
         function startDraw(e) {
-            GAME.isDrawing = true;
+            isDrawing = true;
             const pos = getPos(e);
-            GAME.ctx.beginPath();
-            GAME.ctx.moveTo(pos.x, pos.y);
+            ctx.beginPath();
+            ctx.moveTo(pos.x, pos.y);
         }
 
         function draw(e) {
-            if (!GAME.isDrawing) return;
+            if (!isDrawing) return;
             const pos = getPos(e);
-            GAME.ctx.lineWidth = document.getElementById('brush-size').value;
-            GAME.ctx.strokeStyle = GAME.currentColor;
-            GAME.ctx.lineTo(pos.x, pos.y);
-            GAME.ctx.stroke();
+            ctx.lineWidth = document.getElementById('brush-size').value;
+            ctx.strokeStyle = currentColor;
+            ctx.lineTo(pos.x, pos.y);
+            ctx.stroke();
         }
 
-        function stopDraw() { GAME.isDrawing = false; }
+        function stopDraw() {
+            isDrawing = false;
+        }
 
         function handleTouch(e) {
             e.preventDefault();
@@ -955,209 +772,74 @@
         }
 
         function setColor(color) {
-            GAME.currentColor = color;
+            currentColor = color;
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
             event.target.classList.add('active');
         }
 
         function clearCanvas() {
-            GAME.ctx.fillStyle = 'white';
-            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // SUBMISSIONS
+        function submitWord() {
+            const word = document.getElementById('word-input').value.trim();
+            if (!word) {
+                alert('Skriv något!');
+                return;
+            }
+            socket.emit('submit-word', word);
+            showScreen('screen-waiting');
         }
 
         function submitDrawing() {
-            clearInterval(GAME.timer);
-            document.getElementById('btn-submit-drawing').disabled = true;
-            
-            const imageData = GAME.canvas.toDataURL();
-            
-            // Spara i kedjan
-            const myChain = GAME.chains.get(GAME.myId);
-            const fromPlayerName = GAME.players.find(p => p.id === GAME.receivedFrom)?.name || 'Föregående';
-            
-            myChain.push({
-                type: 'drawing',
-                content: imageData,
-                author: GAME.myName,
-                basedOn: myChain[myChain.length - 1]?.content || 'okänt'
-            });
-
+            const imageData = canvas.toDataURL();
+            socket.emit('submit-drawing', imageData);
             showScreen('screen-waiting');
-            document.getElementById('waiting-text').textContent = 'Väntar på andra...';
-
-            if (GAME.isHost) {
-                handleDrawingSubmission(GAME.myId, imageData);
-            } else {
-                GAME.currentPeer.send(JSON.stringify({
-                    type: 'drawing-submission',
-                    playerId: GAME.myId,
-                    imageData: imageData
-                }));
-            }
-        }
-
-        function handleDrawingSubmission(playerId, imageData) {
-            // Fortsätt kedjan
-            // Hitta vem som ska gissa nästa
-            const player = GAME.players.find(p => p.id === playerId);
-            const playerIndex = GAME.players.indexOf(player);
-            const nextIndex = (playerIndex + 1) % GAME.players.length;
-            const nextPlayer = GAME.players[nextIndex];
-
-            // Spara i nästa spelares "inkorg" (vi simulerar detta)
-            // I verkligheten skickar vi direkt till nästa spelare
-
-            // För enkelhet: Host koordinerar allt
-            // Skicka till nästa spelare att det är dags att gissa
-            if (nextPlayer.id === GAME.myId) {
-                // Det är jag som ska gissa
-                GAME.receivedFrom = playerId;
-                setTimeout(() => showGuessScreen(imageData), 500);
-            } else {
-                const conn = findConnectionTo(nextPlayer.id);
-                if (conn) {
-                    conn.send(JSON.stringify({
-                        type: 'your-turn-guess',
-                        fromPlayer: playerId,
-                        toPlayer: nextPlayer.id,
-                        imageData: imageData
-                    }));
-                }
-            }
-
-            // Kolla om alla är klara med denna runda
-            checkRoundComplete();
-        }
-
-        function showGuessScreen(imageData) {
-            showScreen('screen-guess');
-            document.getElementById('guess-round-info').textContent = `Runda ${GAME.currentRound} - Gissa`;
-            document.getElementById('guess-image').src = imageData;
         }
 
         function submitGuess() {
             const guess = document.getElementById('guess-input').value.trim();
-            if (!guess) { alert('Skriv en gissning!'); return; }
-
-            document.getElementById('btn-submit-guess').disabled = true;
-
-            // Spara i kedjan
-            const myChain = GAME.chains.get(GAME.myId);
-            myChain.push({
-                type: 'guess',
-                content: guess,
-                author: GAME.myName
-            });
-
+            if (!guess) {
+                alert('Skriv en gissning!');
+                return;
+            }
+            socket.emit('submit-guess', guess);
             showScreen('screen-waiting');
-
-            if (GAME.isHost) {
-                handleGuessSubmission(GAME.myId, guess);
-            } else {
-                GAME.currentPeer.send(JSON.stringify({
-                    type: 'guess-submission',
-                    playerId: GAME.myId,
-                    guess: guess
-                }));
-            }
         }
 
-        function handleGuessSubmission(playerId, guess) {
-            // Fortsätt kedjan - nästa ska rita
-            // Samma logik som tidigare men nu ska nästa rita
-            
-            // För enkelhet, låt oss säga att vi fortsätter tills kedjorna är tillräckligt långa
-            checkRoundComplete();
-        }
-
-        function checkRoundComplete() {
-            // Räkna totala antalet items i alla kedjor
-            let totalItems = 0;
-            GAME.chains.forEach(chain => totalItems += chain.length);
-            
-            // Varje spelare ska ha: 1 (ord) + 2*(currentRound-1) items
-            const expectedPerPlayer = 1 + 2 * (GAME.currentRound - 1);
-            const expectedTotal = expectedPerPlayer * GAME.players.length;
-            
-            if (totalItems >= expectedTotal && GAME.isHost) {
-                GAME.currentRound++;
-                
-                if (GAME.currentRound > GAME.maxRounds) {
-                    // Spelet slut, visa resultat
-                    broadcast({ type: 'show-results', chains: Array.from(GAME.chains.entries()) });
-                    showResults(Array.from(GAME.chains.entries()));
-                } else {
-                    // Fortsätt nästa runda
-                    // Host koordinerar vem som ska göra vad
-                    coordinateNextRound();
-                }
-            }
-        }
-
-        function coordinateNextRound() {
-            // Host bestämmer vem som ska rita/gissa baserat på kedjornas längd
-            // Detta är komplext - förenkla genom att alla gör samma typ av tur i varje runda
-            
-            if (GAME.currentRound % 2 === 0) {
-                // Rita-runda
-                // ... liknande logik som startRound2
-            } else {
-                // Gissa-runda
-            }
-        }
-
-        function showResults(chainsArray) {
+        function showResults(chains) {
             showScreen('screen-results');
             
             const container = document.getElementById('chains-container');
             container.innerHTML = '';
             
-            chainsArray.forEach(([starterId, chain]) => {
-                const starter = GAME.players.find(p => p.id === starterId);
+            chains.forEach((chain, index) => {
                 const chainDiv = document.createElement('div');
-                chainDiv.className = 'chain-display';
+                chainDiv.className = 'card chain-viewer';
                 
-                let chainHtml = `<h3 style="color: #764ba2; margin-bottom: 20px;">${starter?.name || 'Okänd'}s kedja:</h3>`;
+                let html = `<h3 style="color: #667eea; margin-bottom: 20px;">Kedja ${index + 1}</h3>`;
                 
-                chain.forEach((item, index) => {
-                    const isLast = index === chain.length - 1;
-                    const arrow = isLast ? '' : '<div style="text-align: center; font-size: 2em; margin: 10px 0;">⬇️</div>';
+                chain.forEach((item, i) => {
+                    html += `<div class="chain-item">`;
+                    html += `<div class="chain-author">${item.author} ${item.type === 'word' ? 'skrev' : item.type === 'drawing' ? 'ritade' : 'gissade'}</div>`;
                     
-                    if (item.type === 'word' || item.type === 'guess') {
-                        chainHtml += `
-                            <div class="chain-item">
-                                <div class="chain-header">
-                                    <span class="chain-author">${item.author}</span>
-                                    <span class="chain-type">${item.type === 'word' ? 'Skrev' : 'Gissade'}</span>
-                                </div>
-                                <div class="chain-content">
-                                    <div class="text">"${item.content}"</div>
-                                </div>
-                            </div>
-                            ${arrow}
-                        `;
-                    } else if (item.type === 'drawing') {
-                        chainHtml += `
-                            <div class="chain-item">
-                                <div class="chain-header">
-                                    <span class="chain-author">${item.author}</span>
-                                    <span class="chain-type">Ritade</span>
-                                </div>
-                                <div class="chain-content">
-                                    <img src="${item.content}" alt="Ritning">
-                                </div>
-                            </div>
-                            ${arrow}
-                        `;
+                    if (item.type === 'drawing') {
+                        html += `<div class="chain-content"><img src="${item.content}" alt="Ritning"></div>`;
+                    } else {
+                        html += `<div class="chain-content">"${item.content}"</div>`;
                     }
+                    
+                    html += `</div>`;
                 });
                 
-                chainDiv.innerHTML = chainHtml;
+                chainDiv.innerHTML = html;
                 container.appendChild(chainDiv);
             });
         }
 
-        console.log('Gartic Phone komplett redo!');
+        console.log('DrawPhone laddad');
     </script>
 </body>
 </html>
