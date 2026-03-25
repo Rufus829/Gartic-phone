@@ -3,507 +3,322 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gartic Phone</title>
-    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <title>Gartic Phone - P2P</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --primary: #6366f1;
-            --primary-dark: #4f46e5;
-            --secondary: #ec4899;
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg);
-            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             padding: 20px;
+            color: white;
         }
 
-        .app {
-            width: 100%;
+        .container {
             max-width: 900px;
-            background: var(--surface);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 30px;
+            color: #333;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
 
-        h1 {
-            text-align: center;
-            font-size: 3rem;
-            margin-bottom: 30px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+        h1 { text-align: center; color: #764ba2; margin-bottom: 20px; }
 
-        .screen {
-            display: none;
-        }
+        .screen { display: none; }
+        .screen.active { display: block; }
 
-        .screen.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        input, button, textarea {
+        button, input, textarea {
             width: 100%;
-            padding: 16px 20px;
-            border-radius: 12px;
-            border: 2px solid #334155;
-            background: #0f172a;
-            color: var(--text);
-            font-size: 16px;
+            padding: 15px;
             margin: 10px 0;
-            transition: all 0.2s;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary);
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            font-size: 16px;
         }
 
         button {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            background: #764ba2;
+            color: white;
             border: none;
             cursor: pointer;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-weight: bold;
         }
 
         button:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 30px -10px var(--primary);
+            box-shadow: 0 5px 20px rgba(118,75,162,0.4);
         }
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
+        button:disabled { background: #ccc; cursor: not-allowed; }
 
-        button.secondary {
-            background: transparent;
-            border: 2px solid var(--primary);
-            color: var(--primary);
-        }
-
-        button.secondary:hover {
-            background: var(--primary);
+        .code-box {
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
-        }
-
-        .card {
-            background: #0f172a;
-            border-radius: 16px;
             padding: 30px;
-            margin: 20px 0;
-            border: 1px solid #334155;
-        }
-
-        .room-code-display {
+            border-radius: 15px;
             text-align: center;
-            padding: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 16px;
             margin: 20px 0;
         }
 
-        .code-text {
-            font-size: 4rem;
-            font-weight: 800;
-            letter-spacing: 20px;
+        .big-code {
             font-family: monospace;
-            cursor: pointer;
-            user-select: all;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .players-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 15px;
-            margin: 20px 0;
-        }
-
-        .player-card {
-            background: #0f172a;
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            border: 2px solid #334155;
-            transition: all 0.2s;
-        }
-
-        .player-card:hover {
-            border-color: var(--primary);
-            transform: translateY(-2px);
-        }
-
-        .player-card.host {
-            border-color: var(--secondary);
-            background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), transparent);
-        }
-
-        .player-card.you {
-            border-color: var(--primary);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
-        }
-
-        .avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            margin: 0 auto 10px;
-        }
-
-        .status {
-            padding: 12px 20px;
+            font-size: 0.9rem;
+            background: rgba(0,0,0,0.2);
+            padding: 15px;
             border-radius: 8px;
-            text-align: center;
-            font-size: 0.9rem;
-            margin: 15px 0;
-        }
-
-        .status.info {
-            background: rgba(99, 102, 241, 0.1);
-            color: #818cf8;
-            border: 1px solid rgba(99, 102, 241, 0.3);
-        }
-
-        .status.success {
-            background: rgba(34, 197, 94, 0.1);
-            color: #4ade80;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        .status.error {
-            background: rgba(239, 68, 68, 0.1);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        canvas {
-            background: white;
-            border-radius: 12px;
-            cursor: crosshair;
-            display: block;
-            margin: 0 auto;
-            touch-action: none;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-
-        .toolbar {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            align-items: center;
-        }
-
-        .color-btn {
-            width: 44px;
-            height: 44px;
-            border-radius: 50%;
-            border: 3px solid transparent;
+            word-break: break-all;
+            margin: 10px 0;
             cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .color-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .color-btn.active {
-            border-color: white;
-            box-shadow: 0 0 0 3px var(--primary);
-            transform: scale(1.15);
-        }
-
-        .tool-group {
-            display: flex;
-            gap: 8px;
-            background: #0f172a;
-            padding: 8px;
-            border-radius: 12px;
-        }
-
-        .tool-btn {
-            width: auto;
-            padding: 12px 20px;
-            margin: 0;
-            background: transparent;
-            border: 1px solid #334155;
-        }
-
-        .tool-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .word-display {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .word-display h2 {
-            font-size: 1.2rem;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-
-        .word-display .word {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .timer {
-            text-align: center;
-            font-size: 4rem;
-            font-weight: 800;
-            margin: 20px 0;
-            font-family: monospace;
-        }
-
-        .timer.warning {
-            color: #ef4444;
-            animation: pulse 1s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .gallery {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 20px;
-        }
-
-        .art-card {
-            background: #0f172a;
-            border-radius: 16px;
-            overflow: hidden;
-            border: 1px solid #334155;
-        }
-
-        .art-card img {
-            width: 100%;
-            display: block;
-        }
-
-        .art-card .info {
-            padding: 20px;
-        }
-
-        .art-card .artist {
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .art-card .word {
-            color: var(--primary);
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .qr-container {
-            text-align: center;
-            margin: 20px 0;
-        }
-
-        #qrcode {
-            display: inline-block;
-            padding: 20px;
-            background: white;
-            border-radius: 12px;
+            max-height: 150px;
+            overflow-y: auto;
         }
 
         textarea {
             font-family: monospace;
             font-size: 12px;
-            min-height: 100px;
+            min-height: 120px;
             resize: vertical;
         }
 
-        .step-indicator {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
+        .step {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border-left: 4px solid #764ba2;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #764ba2;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .players {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
             margin: 20px 0;
         }
 
-        .step {
+        .player {
+            background: #f0f0f0;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .player.connected { border: 3px solid #22c55e; }
+        .player.host { background: #fef3c7; }
+
+        canvas {
+            background: white;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto;
+            cursor: crosshair;
+        }
+
+        .tools {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .color-btn {
             width: 40px;
             height: 40px;
             border-radius: 50%;
-            background: #334155;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 600;
+            border: 3px solid transparent;
+            cursor: pointer;
         }
 
-        .step.active {
-            background: var(--primary);
+        .color-btn.active { border-color: #764ba2; transform: scale(1.2); }
+
+        .timer {
+            font-size: 3em;
+            text-align: center;
+            color: #764ba2;
+            font-weight: bold;
         }
 
-        .step.completed {
-            background: var(--secondary);
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
         }
 
-        @media (max-width: 600px) {
-            .app {
-                padding: 20px;
-            }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .code-text {
-                font-size: 2.5rem;
-                letter-spacing: 10px;
-            }
-            
-            canvas {
-                max-width: 100%;
-                height: auto;
-            }
+        .art-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+
+        .art-card img { width: 100%; }
+        .art-card .info { padding: 15px; text-align: center; }
+
+        .hidden { display: none !important; }
+        
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .status.waiting { background: #fef3c7; color: #92400e; }
+        .status.ready { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
     </style>
 </head>
 <body>
-    <div class="app">
-        <h1>🎨 Gartic Phone</h1>
+    <div class="container">
+        <h1>🎨 Gartic Phone P2P</h1>
 
         <!-- MENU -->
         <div id="screen-menu" class="screen active">
-            <div class="card">
-                <input type="text" id="player-name" placeholder="Ditt namn" maxlength="20">
-                <button onclick="createRoom()" id="btn-create">
-                    Skapa rum
-                </button>
-                <button onclick="showJoin()" class="secondary">
-                    Gå med i rum
-                </button>
-            </div>
+            <input type="text" id="player-name" placeholder="Ditt namn" maxlength="20">
+            <button onclick="becomeHost()">Jag är Host (skapa rum)</button>
+            <button onclick="becomeClient()" style="background: #6c757d;">Jag är Gäst (gå med)</button>
             
-            <div class="card" style="text-align: center;">
-                <p style="color: var(--text-muted); line-height: 1.6;">
-                    Rita och gissa med vänner i realtid!<br>
-                    Ingen server behövs - allt sker direkt mellan era enheter.
+            <div style="margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px;">
+                <h3 style="color: #764ba2; margin-bottom: 15px;">📋 Instruktioner:</h3>
+                <p>1. En person är <strong>Host</strong> och skapar rum</p>
+                <p>2. Host kopierar en lång kod och skickar till vänner</p>
+                <p>3. Vänner klistrar in koden och skickar tillbaka en svarskod</p>
+                <p>4. Host klistrar in svarskoden - klart!</p>
+                <p style="margin-top: 15px; color: #666; font-size: 0.9em;">
+                    💡 Allt sker direkt mellan era datorer - ingen server behövs!
                 </p>
             </div>
         </div>
 
-        <!-- JOIN -->
-        <div id="screen-join" class="screen">
-            <div class="card">
-                <h3 style="margin-bottom: 15px;">Anslut till rum</h3>
-                <p style="color: var(--text-muted); margin-bottom: 15px;">
-                    Klistra in rummets kod från host:
-                </p>
-                <input type="text" id="join-code" placeholder="Rumskod" maxlength="20">
-                <button onclick="joinRoom()" id="btn-join">
-                    Anslut
+        <!-- HOST: Step 1 - Create Offer -->
+        <div id="screen-host-1" class="screen">
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Väntar på anslutning...</strong>
+            </div>
+            
+            <div class="status waiting" id="host-status">
+                Skapar anslutningserbjudande...
+            </div>
+
+            <div class="code-box">
+                <p style="margin-bottom: 10px;">📋 Kopiera denna kod och skicka till vän:</p>
+                <div class="big-code" id="host-offer" onclick="copyToClipboard('host-offer')">
+                    Väntar...
+                </div>
+                <button onclick="copyToClipboard('host-offer')" style="margin-top: 10px;">
+                    Kopiera kod
                 </button>
-                <button onclick="showScreen('screen-menu')" class="secondary">
-                    Tillbaka
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Klistra in vännens svarskod här:</strong>
+                <textarea id="host-answer-input" placeholder="Väntar på kod från vän..."></textarea>
+                <button onclick="hostCompleteConnection()">
+                    Anslut till vän
                 </button>
+            </div>
+        </div>
+
+        <!-- CLIENT: Step 1 - Paste Offer -->
+        <div id="screen-client-1" class="screen">
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Klistra in kod från Host:</strong>
+                <textarea id="client-offer-input" placeholder="Klistra in hostens kod här..."></textarea>
+                <button onclick="clientProcessOffer()">
+                    Fortsätt
+                </button>
+                <button onclick="showScreen('screen-menu')" style="background: #6c757d;">Tillbaka</button>
+            </div>
+        </div>
+
+        <!-- CLIENT: Step 2 - Create Answer -->
+        <div id="screen-client-2" class="screen">
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Skicka denna kod tillbaka till Host:</strong>
+            </div>
+            
+            <div class="status ready">
+                ✅ Skapa din svarskod och skicka till host!
+            </div>
+
+            <div class="code-box">
+                <p style="margin-bottom: 10px;">📋 Kopiera denna kod och skicka till host:</p>
+                <div class="big-code" id="client-answer" onclick="copyToClipboard('client-answer')">
+                    Väntar...
+                </div>
+                <button onclick="copyToClipboard('client-answer')" style="margin-top: 10px;">
+                    Kopiera kod
+                </button>
+            </div>
+
+            <div class="status waiting">
+                ⏳ Väntar på att host ska slutföra anslutningen...
             </div>
         </div>
 
         <!-- LOBBY -->
         <div id="screen-lobby" class="screen">
-            <div class="room-code-display" onclick="copyRoomCode()">
-                <p style="margin-bottom: 10px; font-size: 1.1rem;">Dela denna kod:</p>
-                <div class="code-text" id="room-code">----</div>
-                <p style="margin-top: 10px; font-size: 0.9rem; opacity: 0.8;">
-                    Klicka för att kopiera
-                </p>
+            <div class="status ready" id="lobby-status">
+                ✅ Ansluten! Väntar på fler spelare...
             </div>
 
-            <div class="qr-container">
-                <div id="qrcode"></div>
+            <div class="players" id="players-list"></div>
+
+            <div id="host-controls">
+                <button onclick="addAnotherPlayer()" style="background: #28a745; margin-bottom: 10px;">
+                    + Lägg till fler spelare (upprepa steg 1-2)
+                </button>
+                <button onclick="startGame()" id="btn-start" disabled>
+                    Starta spelet (kräver 2+ spelare)
+                </button>
             </div>
 
-            <div class="status info" id="lobby-status">
-                Väntar på spelare...
+            <div id="client-waiting" style="text-align: center; color: #666; margin-top: 20px;">
+                Väntar på att host ska starta spelet...
             </div>
-
-            <div class="players-grid" id="players-list"></div>
-
-            <button id="btn-start" onclick="startGame()" class="hidden">
-                Starta spelet!
-            </button>
         </div>
 
         <!-- GAME -->
         <div id="screen-game" class="screen">
-            <div class="word-display">
-                <h2>Rita detta ord:</h2>
-                <div class="word" id="game-word">Laddar...</div>
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #764ba2;">Rita: <span id="game-word">Ordet</span></h2>
+                <div class="timer" id="timer">60</div>
             </div>
 
-            <div class="timer" id="game-timer">60</div>
+            <canvas id="canvas" width="800" height="500"></canvas>
 
-            <canvas id="game-canvas" width="800" height="500"></canvas>
-
-            <div class="toolbar">
-                <div class="color-btn active" style="background: #000000" data-color="#000000" onclick="setColor(this)"></div>
-                <div class="color-btn" style="background: #ef4444" data-color="#ef4444" onclick="setColor(this)"></div>
-                <div class="color-btn" style="background: #3b82f6" data-color="#3b82f6" onclick="setColor(this)"></div>
-                <div class="color-btn" style="background: #22c55e" data-color="#22c55e" onclick="setColor(this)"></div>
-                <div class="color-btn" style="background: #eab308" data-color="#eab308" onclick="setColor(this)"></div>
-                <div class="color-btn" style="background: #a855f7" data-color="#a855f7" onclick="setColor(this)"></div>
-                <div class="color-btn" style="background: #f97316" data-color="#f97316" onclick="setColor(this)"></div>
-                <div class="color-btn" style="background: #ffffff" data-color="#ffffff" onclick="setColor(this)"></div>
-
-                <div class="tool-group">
-                    <button class="tool-btn active" onclick="setTool('brush', this)">✏️</button>
-                    <button class="tool-btn" onclick="setTool('eraser', this)">🧽</button>
-                </div>
-
-                <input type="range" id="brush-size" min="2" max="30" value="5" style="width: 120px;">
+            <div class="tools">
+                <div class="color-btn active" style="background: #000" onclick="setColor('#000000')"></div>
+                <div class="color-btn" style="background: #ef4444" onclick="setColor('#ef4444')"></div>
+                <div class="color-btn" style="background: #3b82f6" onclick="setColor('#3b82f6')"></div>
+                <div class="color-btn" style="background: #22c55e" onclick="setColor('#22c55e')"></div>
+                <div class="color-btn" style="background: #eab308" onclick="setColor('#eab308')"></div>
+                <div class="color-btn" style="background: #a855f7" onclick="setColor('#a855f7')"></div>
+                <div class="color-btn" style="background: #fff; border: 2px solid #ddd" onclick="setColor('#ffffff')"></div>
                 
-                <button onclick="clearCanvas()" class="tool-btn">🗑️</button>
+                <input type="range" id="brush-size" min="2" max="30" value="5" style="width: 100px;">
+                <button onclick="clearCanvas()" style="width: auto; background: #dc3545;">Rensa</button>
             </div>
 
             <button onclick="submitDrawing()" id="btn-submit">
@@ -513,488 +328,454 @@
 
         <!-- RESULTS -->
         <div id="screen-results" class="screen">
-            <h2 style="text-align: center; margin-bottom: 30px;">🎉 Resultat</h2>
-            <div class="gallery" id="results-gallery"></div>
-            <button onclick="location.reload()" class="secondary" style="margin-top: 30px;">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #764ba2;">🎉 Resultat</h2>
+            <div class="gallery" id="gallery"></div>
+            <button onclick="location.reload()" style="margin-top: 30px; background: #6c757d;">
                 Spela igen
             </button>
         </div>
     </div>
 
     <script>
-        // Game State
-        const STATE = {
-            peer: null,
-            myId: null,
-            roomCode: null,
+        // SPELSTATE
+        const GAME = {
+            myName: '',
             isHost: false,
-            playerName: '',
-            players: [],
-            connections: new Map(),
-            gameState: 'menu',
-            currentWord: '',
-            drawings: new Map(),
+            myId: 'player-' + Math.random().toString(36).substr(2, 9),
+            players: [], // {id, name, peer, connected}
+            currentPeer: null, // SimplePeer instance
+            connections: [], // Alla anslutningar
+            word: '',
+            drawings: [],
             timer: null,
-            timeLeft: 60,
             canvas: null,
             ctx: null,
             isDrawing: false,
-            currentTool: 'brush',
             currentColor: '#000000'
         };
 
-        const WORDS = [
-            'katt', 'hund', 'enhörning', 'robot', 'pizza', 'raket',
-            'dinosaurie', 'pirat', 'ninja', 'tårta', 'groda', 'astronaut'
-        ];
+        const WORDS = ['katt', 'hund', 'enhörning', 'robot', 'pizza', 'raket', 'dinosaurie', 'pirat', 'ninja', 'tårta'];
 
-        // Navigation
-        function showScreen(screenId) {
+        // NAVIGATION
+        function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
+            document.getElementById(id).classList.add('active');
         }
 
-        // Room Management
-        function createRoom() {
-            STATE.playerName = document.getElementById('player-name').value.trim();
-            if (!STATE.playerName) {
+        function becomeHost() {
+            GAME.myName = document.getElementById('player-name').value.trim();
+            if (!GAME.myName) {
                 alert('Skriv ditt namn!');
                 return;
             }
-
-            STATE.isHost = true;
-
-            // Initialize PeerJS
-            STATE.peer = new Peer({
-                host: '0.peerjs.com',
-                port: 443,
-                secure: true
-            });
-
-            STATE.peer.on('open', (id) => {
-                STATE.myId = id;
-                STATE.roomCode = id.substring(0, 6).toUpperCase();
-                
-                // Add self to players
-                STATE.players = [{
-                    id: id,
-                    name: STATE.playerName,
-                    isHost: true
-                }];
-
-                showLobby();
-                setupHostListeners();
-            });
-
-            STATE.peer.on('error', (err) => {
-                console.error('Peer error:', err);
-                alert('Kunde inte skapa rum. Försök igen.');
-            });
-        }
-
-        function setupHostListeners() {
-            STATE.peer.on('connection', (conn) => {
-                console.log('New connection:', conn.peer);
-                
-                conn.on('open', () => {
-                    STATE.connections.set(conn.peer, conn);
-                    
-                    // Handle incoming data
-                    conn.on('data', (data) => handleData(data, conn));
-                    
-                    // Send current players to new connection
-                    conn.send({
-                        type: 'init',
-                        players: STATE.players,
-                        roomCode: STATE.roomCode
-                    });
-                });
-
-                conn.on('close', () => {
-                    removePlayer(conn.peer);
-                });
-            });
-        }
-
-        function joinRoom() {
-            STATE.playerName = document.getElementById('player-name').value.trim();
-            const code = document.getElementById('join-code').value.trim();
+            GAME.isHost = true;
+            GAME.players = [{id: GAME.myId, name: GAME.myName, isHost: true, connected: true}];
             
-            if (!STATE.playerName) {
-                alert('Skriv ditt namn först!');
-                return;
-            }
-            if (!code) {
-                alert('Skriv rumskoden!');
-                return;
-            }
-
-            STATE.isHost = false;
-
-            STATE.peer = new Peer({
-                host: '0.peerjs.com',
-                port: 443,
-                secure: true
-            });
-
-            STATE.peer.on('open', (id) => {
-                STATE.myId = id;
-                
-                // Connect to host
-                const conn = STATE.peer.connect(code, {
-                    reliable: true
-                });
-
-                conn.on('open', () => {
-                    STATE.connections.set(code, conn);
-                    conn.on('data', (data) => handleData(data, conn));
-                    
-                    // Join as player
-                    conn.send({
-                        type: 'join',
-                        playerId: id,
-                        playerName: STATE.playerName
-                    });
-                });
-
-                conn.on('error', (err) => {
-                    console.error('Connection error:', err);
-                    alert('Kunde inte ansluta till rummet. Kontrollera koden.');
-                });
-            });
+            showScreen('screen-host-1');
+            createHostOffer();
         }
 
-        function handleData(data, conn) {
-            console.log('Received:', data);
+        function becomeClient() {
+            GAME.myName = document.getElementById('player-name').value.trim();
+            if (!GAME.myName) {
+                alert('Skriv ditt namn!');
+                return;
+            }
+            GAME.isHost = false;
+            showScreen('screen-client-1');
+        }
 
-            switch(data.type) {
-                case 'init':
-                    // Client received initial data
-                    STATE.players = data.players;
-                    STATE.roomCode = data.roomCode;
-                    showLobby();
-                    updateStatus('Ansluten! Väntar på att spelet ska starta...');
-                    break;
+        // HOST: Skapa WebRTC offer
+        function createHostOffer() {
+            const peer = new SimplePeer({
+                initiator: true,
+                trickle: false
+            });
 
-                case 'join':
-                    // Host received new player
-                    if (STATE.isHost) {
-                        const newPlayer = {
-                            id: data.playerId,
-                            name: data.playerName,
-                            isHost: false
-                        };
-                        STATE.players.push(newPlayer);
-                        updatePlayersList();
+            peer.on('signal', (data) => {
+                if (data.type === 'offer') {
+                    const offerStr = btoa(JSON.stringify(data));
+                    document.getElementById('host-offer').textContent = offerStr;
+                    document.getElementById('host-status').textContent = '✅ Kod klar! Skicka till vän nu.';
+                    document.getElementById('host-status').className = 'status ready';
+                }
+            });
+
+            peer.on('connect', () => {
+                console.log('Client ansluten!');
+                handleConnection(peer);
+            });
+
+            peer.on('data', (data) => handleData(data));
+
+            peer.on('error', (err) => {
+                console.error('Peer error:', err);
+                document.getElementById('host-status').textContent = '❌ Fel: ' + err.message;
+                document.getElementById('host-status').className = 'status error';
+            });
+
+            GAME.currentPeer = peer;
+        }
+
+        // HOST: Ta emot answer från client
+        function hostCompleteConnection() {
+            const answerStr = document.getElementById('host-answer-input').value.trim();
+            if (!answerStr) {
+                alert('Klistra in svarskoden från vän först!');
+                return;
+            }
+
+            try {
+                const answer = JSON.parse(atob(answerStr));
+                GAME.currentPeer.signal(answer);
+                
+                document.getElementById('host-status').textContent = '⏳ Ansluter...';
+                
+                // Vänta på att anslutningen ska bli klar
+                setTimeout(() => {
+                    if (GAME.currentPeer.connected) {
+                        showLobby();
+                    }
+                }, 1000);
+
+            } catch (e) {
+                alert('Ogiltig kod! Kontrollera att du klistrat in hela svarskoden.');
+                console.error(e);
+            }
+        }
+
+        // CLIENT: Ta emot offer och skapa answer
+        function clientProcessOffer() {
+            const offerStr = document.getElementById('client-offer-input').value.trim();
+            if (!offerStr) {
+                alert('Klistra in koden från host!');
+                return;
+            }
+
+            try {
+                const offer = JSON.parse(atob(offerStr));
+                
+                const peer = new SimplePeer({
+                    initiator: false,
+                    trickle: false
+                });
+
+                peer.on('signal', (data) => {
+                    if (data.type === 'answer') {
+                        const answerStr = btoa(JSON.stringify(data));
+                        document.getElementById('client-answer').textContent = answerStr;
+                        showScreen('screen-client-2');
+                    }
+                });
+
+                peer.on('connect', () => {
+                    console.log('Ansluten till host!');
+                    handleConnection(peer);
+                    setTimeout(() => showLobby(), 500);
+                });
+
+                peer.on('data', (data) => handleData(data));
+
+                peer.on('error', (err) => {
+                    console.error('Peer error:', err);
+                    alert('Fel: ' + err.message);
+                });
+
+                peer.signal(offer);
+                GAME.currentPeer = peer;
+
+            } catch (e) {
+                alert('Ogiltig kod! Kontrollera att du klistrat in hela koden från host.');
+                console.error(e);
+            }
+        }
+
+        // Hantera färdig anslutning
+        function handleConnection(peer) {
+            if (!GAME.connections.includes(peer)) {
+                GAME.connections.push(peer);
+            }
+
+            // Skicka info om mig själv
+            peer.send(JSON.stringify({
+                type: 'player-info',
+                id: GAME.myId,
+                name: GAME.myName,
+                isHost: GAME.isHost
+            }));
+        }
+
+        // Hantera inkommande data
+        function handleData(data) {
+            const msg = JSON.parse(data.toString());
+            console.log('Mottog:', msg);
+
+            switch(msg.type) {
+                case 'player-info':
+                    // Ny spelare ansluten
+                    if (!GAME.players.find(p => p.id === msg.id)) {
+                        GAME.players.push({
+                            id: msg.id,
+                            name: msg.name,
+                            isHost: msg.isHost,
+                            connected: true
+                        });
+                        updateLobby();
                         
-                        // Broadcast to all connections
-                        broadcast({
-                            type: 'player-joined',
-                            player: newPlayer
-                        }, data.playerId);
-                        
-                        updateStatus(`${data.playerName} gick med!`);
+                        // Om host, skicka alla spelare tillbaka
+                        if (GAME.isHost) {
+                            broadcast({
+                                type: 'players-list',
+                                players: GAME.players
+                            });
+                        }
                     }
                     break;
 
-                case 'player-joined':
-                    STATE.players.push(data.player);
-                    updatePlayersList();
+                case 'players-list':
+                    GAME.players = msg.players;
+                    updateLobby();
                     break;
 
-                case 'game-start':
-                    startGameLocal(data.word);
+                case 'start-game':
+                    startGameLocal(msg.word);
                     break;
 
                 case 'drawing':
-                    if (STATE.isHost) {
-                        STATE.drawings.set(data.playerId, {
-                            playerId: data.playerId,
-                            playerName: data.playerName,
-                            imageData: data.imageData
+                    if (GAME.isHost) {
+                        GAME.drawings.push({
+                            playerId: msg.playerId,
+                            playerName: msg.playerName,
+                            imageData: msg.imageData
                         });
-                        checkAllSubmitted();
+                        checkAllDrawings();
                     }
                     break;
 
                 case 'game-end':
-                    showResults(data.drawings);
+                    showResults(msg.drawings);
                     break;
             }
         }
 
-        function broadcast(data, excludeId = null) {
-            STATE.connections.forEach((conn, id) => {
-                if (id !== excludeId && conn.open) {
-                    conn.send(data);
+        function broadcast(data) {
+            const msg = JSON.stringify(data);
+            GAME.connections.forEach(conn => {
+                if (conn.connected) {
+                    conn.send(msg);
                 }
             });
         }
 
-        function removePlayer(peerId) {
-            STATE.players = STATE.players.filter(p => p.id !== peerId);
-            STATE.connections.delete(peerId);
-            updatePlayersList();
-        }
-
-        // UI Updates
+        // LOBBY
         function showLobby() {
             showScreen('screen-lobby');
-            document.getElementById('room-code').textContent = STATE.roomCode;
-            
-            // Generate QR
-            document.getElementById('qrcode').innerHTML = '';
-            new QRCode(document.getElementById('qrcode'), {
-                text: STATE.roomCode,
-                width: 150,
-                height: 150
-            });
+            updateLobby();
 
-            updatePlayersList();
-
-            if (STATE.isHost) {
-                document.getElementById('btn-start').classList.remove('hidden');
+            if (GAME.isHost) {
+                document.getElementById('host-controls').classList.remove('hidden');
+                document.getElementById('client-waiting').classList.add('hidden');
+            } else {
+                document.getElementById('host-controls').classList.add('hidden');
+                document.getElementById('client-waiting').classList.remove('hidden');
             }
         }
 
-        function updatePlayersList() {
+        function updateLobby() {
             const container = document.getElementById('players-list');
-            container.innerHTML = STATE.players.map(p => `
-                <div class="player-card ${p.isHost ? 'host' : ''} ${p.id === STATE.myId ? 'you' : ''}">
-                    <div class="avatar">${p.isHost ? '👑' : '🎨'}</div>
-                    <div style="font-weight: 600;">${p.name}</div>
-                    ${p.id === STATE.myId ? '<div style="font-size: 0.8rem; color: var(--primary);">Du</div>' : ''}
+            container.innerHTML = GAME.players.map(p => `
+                <div class="player ${p.connected ? 'connected' : ''} ${p.isHost ? 'host' : ''}">
+                    <div style="font-size: 2em;">${p.isHost ? '👑' : '🎨'}</div>
+                    <div style="font-weight: bold;">${p.name}</div>
+                    ${p.id === GAME.myId ? '<div style="font-size: 0.8em; color: #22c55e;">Du</div>' : ''}
                 </div>
             `).join('');
 
-            // Update start button
-            if (STATE.isHost) {
+            if (GAME.isHost) {
                 const btn = document.getElementById('btn-start');
-                if (STATE.players.length >= 2) {
+                const others = GAME.players.filter(p => !p.isHost).length;
+                if (others >= 1) {
                     btn.disabled = false;
-                    btn.textContent = `Starta spelet (${STATE.players.length} spelare)`;
+                    btn.textContent = `Starta spelet (${GAME.players.length} spelare)`;
                 } else {
                     btn.disabled = true;
-                    btn.textContent = 'Väntar på fler spelare...';
+                    btn.textContent = 'Väntar på gäster...';
                 }
             }
         }
 
-        function updateStatus(msg) {
-            document.getElementById('lobby-status').textContent = msg;
+        function addAnotherPlayer() {
+            // Host kan ansluta fler genom att upprepa processen
+            showScreen('screen-host-1');
+            document.getElementById('host-answer-input').value = '';
+            createHostOffer();
         }
 
-        function copyRoomCode() {
-            navigator.clipboard.writeText(STATE.roomCode).then(() => {
-                updateStatus('Kod kopierad! Dela med vänner.');
-                setTimeout(() => updateStatus('Väntar på spelare...'), 2000);
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('✅ Kod kopierad! Klistra in den nu.');
             });
         }
 
-        function showJoin() {
-            STATE.playerName = document.getElementById('player-name').value.trim();
-            if (!STATE.playerName) {
-                alert('Skriv ditt namn först!');
-                return;
-            }
-            showScreen('screen-join');
-        }
-
-        // Game Logic
+        // SPEL
         function startGame() {
-            if (STATE.players.length < 2) {
+            if (GAME.players.length < 2) {
                 alert('Vänta på fler spelare!');
                 return;
             }
 
-            STATE.currentWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+            GAME.word = WORDS[Math.floor(Math.random() * WORDS.length)];
             
             broadcast({
-                type: 'game-start',
-                word: STATE.currentWord
+                type: 'start-game',
+                word: GAME.word
             });
 
-            startGameLocal(STATE.currentWord);
+            startGameLocal(GAME.word);
         }
 
         function startGameLocal(word) {
-            STATE.gameState = 'playing';
-            STATE.currentWord = word;
-            
             showScreen('screen-game');
             document.getElementById('game-word').textContent = word;
-            
             initCanvas();
             startTimer(60);
         }
 
         function startTimer(seconds) {
-            STATE.timeLeft = seconds;
-            updateTimer();
+            let timeLeft = seconds;
+            const timerEl = document.getElementById('timer');
             
-            STATE.timer = setInterval(() => {
-                STATE.timeLeft--;
-                updateTimer();
+            GAME.timer = setInterval(() => {
+                timerEl.textContent = timeLeft;
+                if (timeLeft <= 10) timerEl.style.color = '#ef4444';
                 
-                if (STATE.timeLeft <= 0) {
-                    clearInterval(STATE.timer);
+                timeLeft--;
+                if (timeLeft < 0) {
+                    clearInterval(GAME.timer);
                     submitDrawing();
                 }
             }, 1000);
         }
 
-        function updateTimer() {
-            const el = document.getElementById('game-timer');
-            el.textContent = STATE.timeLeft;
-            
-            if (STATE.timeLeft <= 10) {
-                el.classList.add('warning');
-            } else {
-                el.classList.remove('warning');
-            }
-        }
-
-        // Canvas
+        // CANVAS
         function initCanvas() {
-            STATE.canvas = document.getElementById('game-canvas');
-            STATE.ctx = STATE.canvas.getContext('2d');
-            STATE.ctx.fillStyle = 'white';
-            STATE.ctx.fillRect(0, 0, STATE.canvas.width, STATE.canvas.height);
-            STATE.ctx.lineCap = 'round';
-            STATE.ctx.lineJoin = 'round';
+            GAME.canvas = document.getElementById('canvas');
+            GAME.ctx = GAME.canvas.getContext('2d');
+            GAME.ctx.fillStyle = 'white';
+            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
+            GAME.ctx.lineCap = 'round';
+            GAME.ctx.lineJoin = 'round';
 
-            // Events
-            STATE.canvas.addEventListener('mousedown', startDraw);
-            STATE.canvas.addEventListener('mousemove', draw);
-            STATE.canvas.addEventListener('mouseup', stopDraw);
-            STATE.canvas.addEventListener('mouseout', stopDraw);
+            GAME.canvas.addEventListener('mousedown', startDraw);
+            GAME.canvas.addEventListener('mousemove', draw);
+            GAME.canvas.addEventListener('mouseup', stopDraw);
+            GAME.canvas.addEventListener('mouseout', stopDraw);
             
-            // Touch
-            STATE.canvas.addEventListener('touchstart', handleTouch, {passive: false});
-            STATE.canvas.addEventListener('touchmove', handleTouch, {passive: false});
-            STATE.canvas.addEventListener('touchend', stopDraw);
+            GAME.canvas.addEventListener('touchstart', handleTouch, {passive: false});
+            GAME.canvas.addEventListener('touchmove', handleTouch, {passive: false});
+            GAME.canvas.addEventListener('touchend', stopDraw);
         }
 
         function getPos(e) {
-            const rect = STATE.canvas.getBoundingClientRect();
-            const clientX = e.clientX || (e.touches && e.touches[0].clientX);
-            const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+            const rect = GAME.canvas.getBoundingClientRect();
+            const x = (e.clientX || e.touches[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches[0].clientY) - rect.top;
             return {
-                x: (clientX - rect.left) * (STATE.canvas.width / rect.width),
-                y: (clientY - rect.top) * (STATE.canvas.height / rect.height)
+                x: x * (GAME.canvas.width / rect.width),
+                y: y * (GAME.canvas.height / rect.height)
             };
         }
 
         function startDraw(e) {
-            STATE.isDrawing = true;
+            GAME.isDrawing = true;
             const pos = getPos(e);
-            STATE.ctx.beginPath();
-            STATE.ctx.moveTo(pos.x, pos.y);
+            GAME.ctx.beginPath();
+            GAME.ctx.moveTo(pos.x, pos.y);
         }
 
         function draw(e) {
-            if (!STATE.isDrawing) return;
+            if (!GAME.isDrawing) return;
             const pos = getPos(e);
-            
-            STATE.ctx.lineWidth = document.getElementById('brush-size').value;
-            STATE.ctx.strokeStyle = STATE.currentTool === 'eraser' ? '#ffffff' : STATE.currentColor;
-            STATE.ctx.lineTo(pos.x, pos.y);
-            STATE.ctx.stroke();
+            GAME.ctx.lineWidth = document.getElementById('brush-size').value;
+            GAME.ctx.strokeStyle = GAME.currentColor;
+            GAME.ctx.lineTo(pos.x, pos.y);
+            GAME.ctx.stroke();
         }
 
         function stopDraw() {
-            STATE.isDrawing = false;
+            GAME.isDrawing = false;
         }
 
         function handleTouch(e) {
             e.preventDefault();
             const touch = e.touches[0];
-            const evt = {
-                clientX: touch.clientX,
-                clientY: touch.clientY
-            };
+            const evt = { clientX: touch.clientX, clientY: touch.clientY };
             if (e.type === 'touchstart') startDraw(evt);
             else draw(evt);
         }
 
-        function setColor(btn) {
-            STATE.currentColor = btn.dataset.color;
-            STATE.currentTool = 'brush';
+        function setColor(color) {
+            GAME.currentColor = color;
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.tool-btn:first-child').classList.add('active');
-        }
-
-        function setTool(tool, btn) {
-            STATE.currentTool = tool;
-            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            event.target.classList.add('active');
         }
 
         function clearCanvas() {
-            STATE.ctx.fillStyle = 'white';
-            STATE.ctx.fillRect(0, 0, STATE.canvas.width, STATE.canvas.height);
+            GAME.ctx.fillStyle = 'white';
+            GAME.ctx.fillRect(0, 0, GAME.canvas.width, GAME.canvas.height);
         }
 
         function submitDrawing() {
-            clearInterval(STATE.timer);
+            clearInterval(GAME.timer);
             document.getElementById('btn-submit').disabled = true;
             document.getElementById('btn-submit').textContent = 'Väntar på andra...';
 
-            const imageData = STATE.canvas.toDataURL();
+            const imageData = GAME.canvas.toDataURL();
 
-            if (STATE.isHost) {
-                STATE.drawings.set(STATE.myId, {
-                    playerId: STATE.myId,
-                    playerName: STATE.playerName,
+            if (GAME.isHost) {
+                GAME.drawings.push({
+                    playerId: GAME.myId,
+                    playerName: GAME.myName + ' (Host)',
                     imageData: imageData
                 });
-                checkAllSubmitted();
+                checkAllDrawings();
             } else {
-                // Send to host
-                const hostConn = Array.from(STATE.connections.values())[0];
-                if (hostConn) {
-                    hostConn.send({
-                        type: 'drawing',
-                        playerId: STATE.myId,
-                        playerName: STATE.playerName,
-                        imageData: imageData
-                    });
-                }
+                GAME.currentPeer.send(JSON.stringify({
+                    type: 'drawing',
+                    playerId: GAME.myId,
+                    playerName: GAME.myName,
+                    imageData: imageData
+                }));
             }
         }
 
-        function checkAllSubmitted() {
-            if (STATE.drawings.size >= STATE.players.length) {
-                // All submitted
-                const drawingsArray = Array.from(STATE.drawings.values());
-                
+        function checkAllDrawings() {
+            // Host + alla clients
+            const expected = GAME.players.length;
+            if (GAME.drawings.length >= expected) {
                 broadcast({
                     type: 'game-end',
-                    drawings: drawingsArray
+                    drawings: GAME.drawings
                 });
-
-                showResults(drawingsArray);
+                showResults(GAME.drawings);
             }
         }
 
         function showResults(drawings) {
             showScreen('screen-results');
-            
-            const gallery = document.getElementById('results-gallery');
-            gallery.innerHTML = drawings.map(d => `
+            document.getElementById('gallery').innerHTML = drawings.map(d => `
                 <div class="art-card">
-                    <img src="${d.imageData}" alt="Ritning">
+                    <img src="${d.imageData}">
                     <div class="info">
-                        <div class="artist">${d.playerName}</div>
-                        <div class="word">${STATE.currentWord}</div>
+                        <div style="font-weight: bold; color: #764ba2;">${d.playerName}</div>
+                        <div style="color: #666;">${GAME.word}</div>
                     </div>
                 </div>
             `).join('');
         }
 
-        console.log('Gartic Phone loaded');
+        console.log('Gartic Phone P2P ready');
     </script>
 </body>
 </html>
