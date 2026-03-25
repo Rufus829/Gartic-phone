@@ -3,513 +3,1477 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gartic Phone - Fungerande Version</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .hidden { display: none !important; }
-        
-        /* Screens */
-        .screen { display: none; background: white; border-radius: 20px; padding: 30px; max-width: 800px; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-        .screen.active { display: block; }
-        
-        /* Typography */
-        h1 { color: #667eea; text-align: center; margin-bottom: 20px; font-size: 2.5rem; }
-        h2 { color: #333; margin-bottom: 15px; }
-        
-        /* Inputs */
-        input { width: 100%; padding: 15px; font-size: 1.1rem; border: 2px solid #ddd; border-radius: 10px; margin-bottom: 15px; }
-        input:focus { border-color: #667eea; outline: none; }
-        
-        /* Buttons */
-        button { width: 100%; padding: 15px; font-size: 1.1rem; border: none; border-radius: 10px; cursor: pointer; margin-bottom: 10px; transition: all 0.3s; }
-        .btn-primary { background: #667eea; color: white; }
-        .btn-primary:hover { background: #5568d3; transform: translateY(-2px); }
-        .btn-secondary { background: #ec4899; color: white; }
-        .btn-secondary:hover { background: #db2777; }
-        .btn-success { background: #10b981; color: white; }
-        
-        /* Room Code */
-        .room-code-box { background: #1e1b4b; color: white; padding: 20px; border-radius: 15px; text-align: center; margin: 20px 0; }
-        .room-code { font-size: 2.5rem; font-weight: bold; letter-spacing: 5px; margin: 10px 0; }
-        
-        /* Players */
-        .players-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin: 20px 0; }
-        .player-card { background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 15px; border-radius: 10px; text-align: center; }
-        .player-avatar { font-size: 2rem; margin-bottom: 5px; }
-        
-        /* Canvas */
-        .canvas-container { background: #f5f5f5; border-radius: 10px; margin: 15px 0; position: relative; }
-        canvas { display: block; border-radius: 10px; cursor: crosshair; touch-action: none; }
-        
-        /* Tools */
-        .tools { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin: 15px 0; }
-        .tool-btn { width: 50px; height: 50px; border: 2px solid #ddd; background: white; border-radius: 10px; cursor: pointer; font-size: 1.2rem; }
-        .tool-btn.active { border-color: #667eea; background: #667eea; color: white; }
-        .color-btn { width: 35px; height: 35px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; }
-        .color-btn.active { border-color: #333; }
-        
-        /* Timer */
-        .timer { background: #ef4444; color: white; padding: 10px 20px; border-radius: 10px; font-size: 1.5rem; font-weight: bold; display: inline-block; margin-bottom: 15px; }
-        .timer.warning { animation: pulse 1s infinite; }
-        @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
-        
-        /* Results */
-        .chain-item { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 10px; }
-        .chain-drawing { max-width: 100%; border-radius: 10px; margin-top: 10px; }
-        
-        /* Status */
-        .status { position: fixed; top: 20px; right: 20px; padding: 10px 20px; border-radius: 20px; color: white; font-weight: bold; }
-        .status.online { background: #10b981; }
-        .status.offline { background: #ef4444; }
-    </style>
-    <!-- Firebase -->
+    <title>Gartic Phone Pro - Multiplayer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+            --dark: #0f172a;
+            --gray: #64748b;
+            --light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .screen {
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 3rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-family: 'Fredoka One', cursive;
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: 25px;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--gray);
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+        }
+
+        /* Inputs */
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 15px 20px;
+            font-size: 1.1rem;
+            border: 3px solid #e2e8f0;
+            border-radius: 15px;
+            background: white;
+            transition: all 0.3s;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 600;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            outline: none;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 16px 24px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary) 0%, #db2777 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--dark);
+            border: 3px solid #e2e8f0;
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Avatar Selection */
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .avatar-option {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            border: 3px solid transparent;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .avatar-option:hover {
+            transform: scale(1.1) rotate(5deg);
+            border-color: var(--primary-light);
+        }
+
+        .avatar-option.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Room Code */
+        .room-code-box {
+            background: linear-gradient(135deg, var(--dark) 0%, #1e293b 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .room-code-box::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .room-code-label {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .room-code {
+            font-family: 'Fredoka One', cursive;
+            font-size: 3.5rem;
+            letter-spacing: 8px;
+            text-shadow: 0 0 30px rgba(255,255,255,0.3);
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Players */
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+
+        .player-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        .player-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+        }
+
+        .player-avatar {
+            font-size: 2.5rem;
+            margin-bottom: 8px;
+        }
+
+        .player-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .player-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: var(--accent);
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+        }
+
+        .you-badge {
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            background: var(--success);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        /* Settings */
+        .settings-box {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .setting-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .setting-info h4 {
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .setting-info p {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        input[type="range"] {
+            width: 150px;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #e2e8f0;
+            border-radius: 10px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
+        }
+
+        /* Drawing Screen */
+        .drawing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+
+        .prompt-display {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px 25px;
+            border-radius: 15px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            position: relative;
+        }
+
+        .prompt-display::before {
+            content: '"';
+            position: absolute;
+            left: 15px;
+            top: -10px;
+            font-size: 4rem;
+            opacity: 0.2;
+            font-family: serif;
+        }
+
+        .timer {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-family: 'Fredoka One', cursive;
+            font-size: 2rem;
+            min-width: 80px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .timer.warning {
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .canvas-wrapper {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        canvas {
+            background: white;
+            border-radius: 10px;
+            cursor: crosshair;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 15px;
+        }
+
+        .tool-btn {
+            width: 55px;
+            height: 55px;
+            border: none;
+            background: white;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.4rem;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tool-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .tool-btn.active {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+        }
+
+        .color-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 4px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .color-btn:hover {
+            transform: scale(1.15);
+        }
+
+        .color-btn.active {
+            border-color: var(--dark);
+            transform: scale(1.1);
+            box-shadow: 0 0 0 3px white, 0 0 0 5px var(--primary);
+        }
+
+        /* Writing Screen */
+        .writing-box {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .drawing-show {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .drawing-show img {
+            max-width: 100%;
+            max-height: 350px;
+            border-radius: 10px;
+        }
+
+        /* Waiting Screen */
+        .waiting-box {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 80px;
+            height: 80px;
+            border: 6px solid #e2e8f0;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 30px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .progress-container {
+            max-width: 400px;
+            margin: 30px auto;
+        }
+
+        .progress-bar {
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+
+        /* Results */
+        .chain-card {
+            background: white;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        .chain-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 20px 25px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chain-avatar {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+        }
+
+        .chain-title h3 {
+            font-size: 1.3rem;
+            margin: 0;
+        }
+
+        .chain-title p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+            margin: 0;
+        }
+
+        .chain-body {
+            padding: 25px;
+        }
+
+        .chain-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+
+        .chain-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--secondary-light) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+
+        .chain-content {
+            flex: 1;
+        }
+
+        .chain-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .chain-author {
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+
+        .chain-image {
+            max-width: 250px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .chain-arrow {
+            text-align: center;
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin: 10px 0;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--dark);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.success {
+            background: var(--success);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .room-code { font-size: 2.5rem; letter-spacing: 4px; }
+            .drawing-header { flex-direction: column; }
+            .timer { width: 100%; }
+            canvas { max-width: 100%; height: auto; }
+        }
+    </style>
 </head>
 <body>
 
-    <!-- Status -->
-    <div id="status" class="status offline">Offline</div>
-
-    <!-- Setup Screen -->
-    <div id="setupScreen" class="screen active">
+    <!-- SETUP SCREEN -->
+    <div id="screen-setup" class="screen active">
         <h1>🎨 Gartic Phone</h1>
-        <input type="text" id="playerName" placeholder="Ditt namn" maxlength="12">
-        <button class="btn-primary" onclick="createRoom()">Skapa Rum</button>
-        <button class="btn-secondary" onclick="showJoin()">Gå Med i Rum</button>
+        <p class="subtitle">Multiplayer-ritspelet - Skapa eller gå med i ett rum!</p>
+        
+        <div class="input-group">
+            <input type="text" id="playerName" placeholder="Ditt smeknamn" maxlength="12" value="">
+        </div>
+
+        <h3 style="text-align: center; margin-bottom: 15px; color: var(--dark);">Välj din avatar</h3>
+        <div class="avatar-grid" id="avatarGrid">
+            <div class="avatar-option selected" data-avatar="🎨">🎨</div>
+            <div class="avatar-option" data-avatar="🎭">🎭</div>
+            <div class="avatar-option" data-avatar="🚀">🚀</div>
+            <div class="avatar-option" data-avatar="🔥">🔥</div>
+            <div class="avatar-option" data-avatar="🌟">🌟</div>
+            <div class="avatar-option" data-avatar="🎸">🎸</div>
+            <div class="avatar-option" data-avatar="🎪">🎪</div>
+            <div class="avatar-option" data-avatar="🎯">🎯</div>
+        </div>
+
+        <button class="btn btn-primary" onclick="createRoom()">🏠 Skapa Nytt Rum</button>
+        <button class="btn btn-secondary" onclick="showJoin()">🔑 Gå Med i Rum</button>
     </div>
 
-    <!-- Join Screen -->
-    <div id="joinScreen" class="screen">
+    <!-- JOIN SCREEN -->
+    <div id="screen-join" class="screen">
         <h2>Gå Med i Rum</h2>
-        <input type="text" id="joinCode" placeholder="Rumskod (6 bokstäver)" maxlength="6" style="text-transform: uppercase;">
-        <button class="btn-primary" onclick="joinRoom()">Anslut</button>
-        <button onclick="showScreen('setupScreen')">Tillbaka</button>
+        <p class="subtitle">Ange rumskoden från din vän</p>
+        
+        <div class="input-group">
+            <input type="text" id="joinCode" placeholder="Rumskod (t.ex. ABC123)" maxlength="6" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 4px;">
+        </div>
+        
+        <button class="btn btn-primary" onclick="joinRoom()">🚪 Anslut</button>
+        <button class="btn btn-outline" onclick="showScreen('screen-setup')">↩️ Tillbaka</button>
     </div>
 
-    <!-- Lobby Screen -->
-    <div id="lobbyScreen" class="screen">
-        <h2>Lobby</h2>
+    <!-- LOBBY SCREEN -->
+    <div id="screen-lobby" class="screen">
+        <h2>🎮 Spellobby</h2>
+        
         <div class="room-code-box">
-            <div>Rumskod:</div>
-            <div class="room-code" id="roomCode">------</div>
-            <button onclick="copyCode()" style="width: auto; padding: 10px 20px;">Kopiera</button>
+            <div class="room-code-label">Dela denna kod med vänner</div>
+            <div class="room-code" id="roomCodeDisplay">------</div>
+            <button class="copy-btn" onclick="copyCode()">📋 Kopiera</button>
         </div>
+
         <div class="players-grid" id="playersGrid"></div>
-        <div id="hostControls">
-            <input type="number" id="drawTime" value="60" min="30" max="120" style="width: 100px; display: inline;">
-            <span>sekunder att rita</span>
-            <button class="btn-success" onclick="startGame()" style="margin-top: 15px;">Starta Spelet!</button>
+
+        <div class="settings-box" id="hostSettings">
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>⏱️ Rit-tid</h4>
+                    <p>Tid för att rita varje bild</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="range" id="drawTime" min="30" max="120" value="60" oninput="document.getElementById('timeDisplay').textContent = this.value + 's'">
+                    <span id="timeDisplay" style="font-weight: 700; min-width: 50px;">60s</span>
+                </div>
+            </div>
+            <div class="setting-row">
+                <div class="setting-info">
+                    <h4>🔄 Antal rundor</h4>
+                    <p>Hur många omgångar att spela</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="range" id="roundCount" min="4" max="10" step="2" value="6" oninput="document.getElementById('roundDisplay').textContent = this.value">
+                    <span id="roundDisplay" style="font-weight: 700; min-width: 30px;">6</span>
+                </div>
+            </div>
         </div>
-        <button onclick="leaveRoom()">Lämna Rum</button>
+
+        <div id="hostControls">
+            <button class="btn btn-success" onclick="startGame()">🚀 Starta Spelet</button>
+        </div>
+        <button class="btn btn-outline" onclick="leaveRoom()">🚪 Lämna Rum</button>
     </div>
 
-    <!-- Drawing Screen -->
-    <div id="drawingScreen" class="screen">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <div style="font-weight: bold; font-size: 1.2rem;" id="drawPrompt">Rita: ...</div>
+    <!-- DRAWING SCREEN -->
+    <div id="screen-drawing" class="screen">
+        <div class="drawing-header">
+            <div class="prompt-display" id="drawPrompt">
+                Väntar på prompt...
+            </div>
             <div class="timer" id="drawTimer">60</div>
         </div>
-        <div class="canvas-container">
-            <canvas id="drawingCanvas" width="700" height="400"></canvas>
+
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="750" height="450"></canvas>
         </div>
-        <div class="tools">
-            <button class="tool-btn active" onclick="setTool('pen')">✏️</button>
-            <button class="tool-btn" onclick="setTool('eraser')">🧽</button>
+
+        <div class="toolbar">
+            <button class="tool-btn active" onclick="setTool('pen', this)">✏️</button>
+            <button class="tool-btn" onclick="setTool('eraser', this)">🧽</button>
             <button class="tool-btn" onclick="clearCanvas()">🗑️</button>
-            <div class="color-btn active" style="background: #000;" onclick="setColor('#000')"></div>
-            <div class="color-btn" style="background: #ef4444;" onclick="setColor('#ef4444')"></div>
-            <div class="color-btn" style="background: #3b82f6;" onclick="setColor('#3b82f6')"></div>
-            <div class="color-btn" style="background: #10b981;" onclick="setColor('#10b981')"></div>
+            
+            <div class="color-btn active" style="background: #000000;" onclick="setColor('#000000', this)"></div>
+            <div class="color-btn" style="background: #ef4444;" onclick="setColor('#ef4444', this)"></div>
+            <div class="color-btn" style="background: #f59e0b;" onclick="setColor('#f59e0b', this)"></div>
+            <div class="color-btn" style="background: #10b981;" onclick="setColor('#10b981', this)"></div>
+            <div class="color-btn" style="background: #3b82f6;" onclick="setColor('#3b82f6', this)"></div>
+            <div class="color-btn" style="background: #8b5cf6;" onclick="setColor('#8b5cf6', this)"></div>
+            <div class="color-btn" style="background: #ec4899;" onclick="setColor('#ec4899', this)"></div>
+            <div class="color-btn" style="background: #ffffff; border: 2px solid #ddd;" onclick="setColor('#ffffff', this)"></div>
         </div>
-        <button class="btn-success" onclick="submitDrawing()">Klar!</button>
+
+        <button class="btn btn-success" onclick="submitDrawing()">✅ Jag är klar!</button>
     </div>
 
-    <!-- Writing Screen -->
-    <div id="writingScreen" class="screen">
-        <h2>Vad ser du?</h2>
-        <div class="timer" id="writeTimer">45</div>
-        <img id="showDrawing" style="max-width: 100%; border-radius: 10px; margin-bottom: 15px;">
-        <input type="text" id="guessInput" placeholder="Beskriv bilden..." maxlength="50">
-        <button class="btn-primary" onclick="submitGuess()">Skicka</button>
-    </div>
-
-    <!-- Waiting Screen -->
-    <div id="waitingScreen" class="screen">
-        <h2>Väntar på andra...</h2>
-        <div style="width: 100%; height: 20px; background: #eee; border-radius: 10px; margin: 20px 0;">
-            <div id="waitProgress" style="width: 0%; height: 100%; background: #667eea; border-radius: 10px; transition: 0.5s;"></div>
+    <!-- WRITING SCREEN -->
+    <div id="screen-writing" class="screen">
+        <div class="writing-box">
+            <h2>Vad ser du på bilden?</h2>
+            <div class="timer warning" id="writeTimer" style="margin: 15px auto;">45</div>
+            
+            <div class="drawing-show">
+                <img id="showDrawing" src="" alt="Ritning att beskriva">
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="guessInput" placeholder="Skriv vad du ser..." maxlength="50" style="text-align: center; font-size: 1.3rem;">
+            </div>
+            
+            <button class="btn btn-primary" onclick="submitGuess()">💬 Skicka beskrivning</button>
         </div>
-        <p id="waitText">0 / 4 klara</p>
     </div>
 
-    <!-- Results Screen -->
-    <div id="resultsScreen" class="screen">
-        <h2>Resultat!</h2>
+    <!-- WAITING SCREEN -->
+    <div id="screen-waiting" class="screen">
+        <div class="waiting-box">
+            <div class="spinner"></div>
+            <h2>Väntar på andra spelare...</h2>
+            <p style="color: var(--gray); margin-top: 10px;">Alla måste vara klara för att fortsätta</p>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="waitProgress" style="width: 25%;"></div>
+                </div>
+                <p id="waitText" style="margin-top: 15px; font-weight: 700; color: var(--primary);">1 / 4 klara</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULTS SCREEN -->
+    <div id="screen-results" class="screen">
+        <h1>🎉 Resultaten är här!</h1>
+        <p class="subtitle">Se hur meningarna förvandlades genom spelet</p>
+        
         <div id="resultsList"></div>
-        <button class="btn-primary" onclick="playAgain()">Spela Igen</button>
-        <button onclick="backToLobby()">Tillbaka till Lobby</button>
+        
+        <div style="display: flex; gap: 15px; margin-top: 30px;">
+            <button class="btn btn-primary" onclick="playAgain()" style="flex: 1;">🔄 Spela Igen</button>
+            <button class="btn btn-outline" onclick="backToLobby()" style="flex: 1;">🏠 Till Lobby</button>
+        </div>
     </div>
 
     <script>
-        // ==================== FIREBASE CONFIG ====================
-        // BYT UT DENNA MOT DIN EGNA FRÅN FIREBASE:
+        // 🔥 FIREBASE CONFIG - DIN EGNA
         const firebaseConfig = {
-  apiKey: "AIzaSyB0wUCaXCqWhDcgMOLPC_pIS4PRQLkpOrw",
-  authDomain: "gartic-phone-game-b9a00.firebaseapp.com",
-  projectId: "gartic-phone-game-b9a00",
-  storageBucket: "gartic-phone-game-b9a00.firebasestorage.app",
-  messagingSenderId: "18038938341",
-  appId: "1:18038938341:web:858f7876b097dfdec0520c",
-  measurementId: "G-F60YS5KCWS"
-};
-
-        // Initiera Firebase
-        let app, database, roomRef;
-        try {
-            app = firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            document.getElementById('status').className = 'status online';
-            document.getElementById('status').textContent = 'Online';
-        } catch (e) {
-            console.log('Firebase inte konfigurerat, kör i demo-läge');
-        }
-
-        // ==================== SPEL-TILLSTÅND ====================
-        const state = {
-            player: { id: Math.random().toString(36).substr(2, 9), name: '', isHost: false },
-            room: { code: null, players: [] },
-            game: { round: 0, phase: 'lobby', chains: [], myChain: null },
-            canvas: { tool: 'pen', color: '#000', isDrawing: false }
+            apiKey: "AIzaSyB0wUCaXCqWhDcgMOLPC_pIS4PRQLkpOrw",
+            authDomain: "gartic-phone-game-b9a00.firebaseapp.com",
+            projectId: "gartic-phone-game-b9a00",
+            storageBucket: "gartic-phone-game-b9a00.firebasestorage.app",
+            messagingSenderId: "18038938341",
+            appId: "1:18038938341:web:858f7876b097dfdec0520c",
+            measurementId: "G-F60YS5KCWS",
+            databaseURL: "https://gartic-phone-game-b9a00-default-rtdb.firebaseio.com"
         };
 
+        // Initiera Firebase
+        let app, database, roomRef, currentRoomCode;
+        let isHost = false;
+        let playerId = Math.random().toString(36).substr(2, 9);
+        let playerName = '';
+        let playerAvatar = '🎨';
+        let gameState = {
+            players: [],
+            settings: { drawTime: 60, rounds: 6 },
+            phase: 'lobby',
+            currentRound: 0,
+            chains: []
+        };
+        let localUnsubscribe = null;
+
+        // Prompts
         const PROMPTS = [
-            "En katt som dansar", "En elefant på rymmen", "En pirat som lagar mat",
+            "En katt som dansar balett", "En elefant på rymmen", "En pirat som lagar mat",
             "En robot som gråter", "En enhörning i rymden", "En dinosaurie som spelar gitarr",
-            "En astronaut som fikar", "Ett spöke på semester", "En drake som yogar"
+            "En astronaut som bakar cupcakes", "Ett spöke på semester", "En drake som yogar",
+            "En hund som surfar", "En groda som är prins", "Ett monster som bakar",
+            "En kanin som boxas", "En björn som målar", "En fisk som flyger"
         ];
 
-        // ==================== HJÄLPFUNKTIONER ====================
+        // Canvas
+        let canvas, ctx, isDrawing = false, currentTool = 'pen', currentColor = '#000000';
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                app = firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                console.log('Firebase ansluten!');
+            } catch (e) {
+                console.error('Firebase fel:', e);
+                showToast('Firebase-anslutning misslyckades', 'error');
+            }
+
+            // Ladda sparat namn
+            const saved = localStorage.getItem('gartic_name');
+            if (saved) document.getElementById('playerName').value = saved;
+
+            // Avatar selection
+            document.querySelectorAll('.avatar-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    document.querySelectorAll('.avatar-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    playerAvatar = opt.dataset.avatar;
+                });
+            });
+
+            // Enter key handlers
+            document.getElementById('playerName').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') createRoom();
+            });
+            document.getElementById('joinCode').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') joinRoom();
+            });
+            document.getElementById('guessInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitGuess();
+            });
+        });
+
+        // Hjälpfunktioner
         function showScreen(id) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(id).classList.add('active');
         }
 
-        function generateCode() {
-            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        function showToast(msg, type = 'success') {
+            const existing = document.querySelector('.toast');
+            if (existing) existing.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.remove(), 3000);
         }
 
-        // ==================== RUM-HANTERING ====================
+        function generateCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        // SKAPA RUM
         function createRoom() {
-            const name = document.getElementById('playerName').value.trim();
-            if (!name) { alert('Ange ett namn!'); return; }
+            playerName = document.getElementById('playerName').value.trim();
+            if (!playerName) {
+                showToast('Ange ett namn!', 'error');
+                return;
+            }
+            localStorage.setItem('gartic_name', playerName);
+
+            isHost = true;
+            currentRoomCode = generateCode();
             
-            state.player.name = name;
-            state.player.isHost = true;
-            state.room.code = generateCode();
-            state.room.players = [{...state.player}];
-            
-            // Spara till Firebase
+            const playerData = {
+                id: playerId,
+                name: playerName,
+                avatar: playerAvatar,
+                isHost: true,
+                ready: false
+            };
+
+            gameState.players = [playerData];
+
             if (database) {
-                roomRef = database.ref('rooms/' + state.room.code);
-                roomRef.set({
-                    players: state.room.players,
-                    phase: 'lobby',
-                    settings: { drawTime: 60 },
-                    created: Date.now()
-                });
+                roomRef = database.ref('rooms/' + currentRoomCode);
                 
+                roomRef.set({
+                    created: Date.now(),
+                    phase: 'lobby',
+                    settings: gameState.settings,
+                    players: gameState.players,
+                    chains: []
+                });
+
                 // Lyssna på ändringar
-                roomRef.on('value', (snapshot) => {
+                localUnsubscribe = roomRef.on('value', (snapshot) => {
                     const data = snapshot.val();
                     if (data) {
-                        state.room.players = data.players || [];
+                        gameState = { ...gameState, ...data };
                         updateLobby();
-                        if (data.phase === 'drawing' && state.game.phase === 'lobby') {
-                            startDrawingPhase(data);
+                        
+                        // Hantera fas-ändringar
+                        if (data.phase === 'drawing' && document.getElementById('screen-lobby').classList.contains('active')) {
+                            startDrawingPhase();
+                        } else if (data.phase === 'writing' && document.getElementById('screen-waiting').classList.contains('active')) {
+                            // Vänta på att alla är klara, sedan visa writing
                         }
                     }
                 });
             }
-            
-            document.getElementById('roomCode').textContent = state.room.code;
+
+            document.getElementById('roomCodeDisplay').textContent = currentRoomCode;
+            document.getElementById('hostSettings').style.display = 'block';
             document.getElementById('hostControls').style.display = 'block';
+            
             updateLobby();
-            showScreen('lobbyScreen');
+            showScreen('screen-lobby');
+            showToast('Rum skapat! Dela koden.', 'success');
         }
 
+        // GÅ MED I RUM
         function showJoin() {
-            const name = document.getElementById('playerName').value.trim();
-            if (!name) { alert('Ange ett namn först!'); return; }
-            state.player.name = name;
-            showScreen('joinScreen');
+            playerName = document.getElementById('playerName').value.trim();
+            if (!playerName) {
+                showToast('Ange ett namn först!', 'error');
+                return;
+            }
+            showScreen('screen-join');
+            document.getElementById('joinCode').focus();
         }
 
         function joinRoom() {
-            const code = document.getElementById('joinCode').value.toUpperCase();
-            if (code.length !== 6) { alert('Ogiltig kod!'); return; }
-            
-            state.room.code = code;
-            state.player.isHost = false;
-            
+            const code = document.getElementById('joinCode').value.toUpperCase().trim();
+            if (code.length !== 6) {
+                showToast('Ogiltig kod!', 'error');
+                return;
+            }
+
+            isHost = false;
+            currentRoomCode = code;
+
+            const playerData = {
+                id: playerId,
+                name: playerName,
+                avatar: playerAvatar,
+                isHost: false,
+                ready: false
+            };
+
             if (database) {
                 roomRef = database.ref('rooms/' + code);
                 
                 roomRef.once('value').then((snapshot) => {
                     const data = snapshot.val();
-                    if (!data) { alert('Rummet finns inte!'); return; }
-                    
+                    if (!data) {
+                        showToast('Rummet finns inte!', 'error');
+                        return;
+                    }
+
                     // Lägg till spelare
                     const players = data.players || [];
-                    players.push({...state.player});
-                    roomRef.update({ players: players });
+                    if (players.length >= 8) {
+                        showToast('Rummet är fullt!', 'error');
+                        return;
+                    }
                     
-                    // Lyssna på ändringar
-                    roomRef.on('value', (snap) => {
+                    players.push(playerData);
+                    roomRef.update({ players: players });
+
+                    // Lyssna
+                    localUnsubscribe = roomRef.on('value', (snap) => {
                         const d = snap.val();
                         if (d) {
-                            state.room.players = d.players || [];
+                            gameState = { ...gameState, ...d };
                             updateLobby();
-                            if (d.phase === 'drawing' && state.game.phase === 'lobby') {
-                                startDrawingPhase(d);
+                            
+                            if (d.phase === 'drawing' && document.getElementById('screen-lobby').classList.contains('active')) {
+                                startDrawingPhase();
                             }
                         }
                     });
                 });
-            } else {
-                // Demo-läge
-                state.room.players = [
-                    { id: '1', name: 'Värd', isHost: true },
-                    { id: '2', name: 'Anna', isHost: false },
-                    state.player
-                ];
-                updateLobby();
             }
-            
-            document.getElementById('roomCode').textContent = code;
+
+            document.getElementById('roomCodeDisplay').textContent = code;
+            document.getElementById('hostSettings').style.display = 'block';
             document.getElementById('hostControls').style.display = 'none';
-            showScreen('lobbyScreen');
+            
+            updateLobby();
+            showScreen('screen-lobby');
+            showToast('Anslöt till rum!', 'success');
         }
 
+        // UPPDATERA LOBBY
         function updateLobby() {
             const grid = document.getElementById('playersGrid');
             grid.innerHTML = '';
-            state.room.players.forEach(p => {
+            
+            gameState.players.forEach(p => {
+                const isYou = p.id === playerId;
                 const div = document.createElement('div');
                 div.className = 'player-card';
-                div.innerHTML = `<div class="player-avatar">🎨</div><div>${p.name}${p.isHost ? ' 👑' : ''}</div>`;
+                div.innerHTML = `
+                    ${isYou ? '<div class="you-badge">DU</div>' : ''}
+                    ${p.isHost ? '<div class="player-badge">👑</div>' : ''}
+                    <div class="player-avatar">${p.avatar}</div>
+                    <div class="player-name">${p.name}</div>
+                `;
                 grid.appendChild(div);
             });
         }
 
         function copyCode() {
-            navigator.clipboard.writeText(state.room.code);
-            alert('Kod kopierad!');
+            navigator.clipboard.writeText(currentRoomCode).then(() => {
+                showToast('Kod kopierad!', 'success');
+            });
         }
 
         function leaveRoom() {
-            if (database && roomRef) {
-                roomRef.off();
-                if (state.player.isHost) {
-                    roomRef.remove();
+            if (localUnsubscribe && roomRef) {
+                roomRef.off('value', localUnsubscribe);
+                
+                // Ta bort sig själv
+                const players = gameState.players.filter(p => p.id !== playerId);
+                if (players.length === 0) {
+                    roomRef.remove(); // Radera tomt rum
                 } else {
-                    const players = state.room.players.filter(p => p.id !== state.player.id);
                     roomRef.update({ players: players });
                 }
             }
             location.reload();
         }
 
-        // ==================== SPEL-LOGIK ====================
+        // STARTA SPEL
         function startGame() {
-            const drawTime = parseInt(document.getElementById('drawTime').value) || 60;
-            
+            if (gameState.players.length < 2) {
+                showToast('Minst 2 spelare krävs!', 'error');
+                return;
+            }
+
+            const drawTime = parseInt(document.getElementById('drawTime').value);
+            const rounds = parseInt(document.getElementById('roundCount').value);
+
             // Skapa kedjor
-            state.game.chains = state.room.players.map((p, i) => ({
-                owner: p,
-                items: [{ type: 'text', content: PROMPTS[i % PROMPTS.length], author: p }],
-                nextPlayer: 0
+            const chains = gameState.players.map((player, index) => ({
+                owner: player,
+                items: [{
+                    type: 'text',
+                    content: PROMPTS[index % PROMPTS.length],
+                    author: player.name
+                }],
+                currentPlayerIndex: 0
             }));
-            
-            state.game.phase = 'drawing';
-            state.game.round = 1;
-            
-            if (database && roomRef) {
+
+            if (roomRef) {
                 roomRef.update({
                     phase: 'drawing',
-                    chains: state.game.chains,
-                    settings: { drawTime: drawTime, round: 1 }
+                    settings: { drawTime, rounds },
+                    chains: chains,
+                    currentRound: 1,
+                    completedDrawings: 0,
+                    completedGuesses: 0
                 });
             }
-            
-            startDrawingPhase({ settings: { drawTime: drawTime }, chains: state.game.chains });
+
+            startDrawingPhase();
         }
 
-        function startDrawingPhase(data) {
-            state.game.phase = 'drawing';
-            const drawTime = data.settings?.drawTime || 60;
-            
-            // Hitta rätt kedja för denna spelare
-            const myIndex = state.room.players.findIndex(p => p.id === state.player.id);
-            state.game.myChain = state.game.chains[myIndex];
-            
-            const prompt = state.game.myChain.items[0].content;
+        // RITA-FAS
+        function startDrawingPhase() {
+            // Hitta min kedja
+            const myChainIndex = gameState.players.findIndex(p => p.id === playerId);
+            const myChain = gameState.chains[myChainIndex];
+            const prompt = myChain.items[0].content;
+
             document.getElementById('drawPrompt').textContent = `Rita: "${prompt}"`;
+            document.getElementById('drawTimer').textContent = gameState.settings.drawTime || 60;
             
-            showScreen('drawingScreen');
+            showScreen('screen-drawing');
             initCanvas();
-            startTimer(drawTime, 'drawTimer', submitDrawing);
+            
+            startTimer(gameState.settings.drawTime || 60, 'drawTimer', () => {
+                submitDrawing();
+            });
         }
 
-        // ==================== CANVAS ====================
         function initCanvas() {
-            const canvas = document.getElementById('drawingCanvas');
-            const ctx = canvas.getContext('2d');
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
             
-            // Rita vit bakgrund
+            // Vit bakgrund
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             
+            // Events
             let drawing = false;
             
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = (e.clientX || e.touches[0].clientX) - rect.left;
+                const y = (e.clientY || e.touches[0].clientY) - rect.top;
+                return { x, y };
+            };
+            
             const start = (e) => {
+                e.preventDefault();
                 drawing = true;
-                const pos = getPos(e, canvas);
+                const pos = getPos(e);
                 ctx.beginPath();
                 ctx.moveTo(pos.x, pos.y);
             };
             
             const move = (e) => {
                 if (!drawing) return;
-                const pos = getPos(e, canvas);
-                ctx.lineWidth = state.canvas.tool === 'eraser' ? 20 : 3;
+                e.preventDefault();
+                const pos = getPos(e);
+                
+                ctx.lineWidth = currentTool === 'eraser' ? 20 : 3;
                 ctx.lineCap = 'round';
-                ctx.strokeStyle = state.canvas.tool === 'eraser' ? 'white' : state.canvas.color;
+                ctx.strokeStyle = currentTool === 'eraser' ? '#ffffff' : currentColor;
+                
                 ctx.lineTo(pos.x, pos.y);
                 ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
             };
             
-            const end = () => { drawing = false; ctx.beginPath(); };
+            const stop = () => {
+                drawing = false;
+                ctx.beginPath();
+            };
             
-            canvas.addEventListener('mousedown', start);
-            canvas.addEventListener('mousemove', move);
-            canvas.addEventListener('mouseup', end);
-            canvas.addEventListener('touchstart', (e) => { e.preventDefault(); start(e.touches[0]); });
-            canvas.addEventListener('touchmove', (e) => { e.preventDefault(); move(e.touches[0]); });
-            canvas.addEventListener('touchend', end);
+            canvas.onmousedown = start;
+            canvas.onmousemove = move;
+            canvas.onmouseup = stop;
+            canvas.onmouseout = stop;
+            canvas.ontouchstart = (e) => start(e);
+            canvas.ontouchmove = (e) => move(e);
+            canvas.ontouchend = stop;
         }
 
-        function getPos(e, canvas) {
-            const rect = canvas.getBoundingClientRect();
-            return { x: e.clientX - rect.left, y: e.clientY - rect.top };
-        }
-
-        function setTool(tool) {
-            state.canvas.tool = tool;
+        function setTool(tool, btn) {
+            currentTool = tool;
             document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            btn.classList.add('active');
         }
 
-        function setColor(color) {
-            state.canvas.color = color;
-            state.canvas.tool = 'pen';
+        function setColor(color, btn) {
+            currentColor = color;
+            currentTool = 'pen';
             document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            btn.classList.add('active');
             document.querySelector('.tool-btn').classList.add('active');
         }
 
         function clearCanvas() {
-            const canvas = document.getElementById('drawingCanvas');
-            const ctx = canvas.getContext('2d');
             ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
         }
 
         function submitDrawing() {
-            const canvas = document.getElementById('drawingCanvas');
-            const image = canvas.toDataURL('image/png');
+            // Spara bild
+            const imageData = canvas.toDataURL('image/png');
             
-            // Spara i kedjan
-            state.game.myChain.items.push({ type: 'image', content: image, author: state.player });
-            
-            if (database && roomRef) {
-                roomRef.child('chains').child(state.room.players.findIndex(p => p.id === state.player.id))
-                    .update({ items: state.game.myChain.items });
+            // Uppdatera min kedja
+            const myChainIndex = gameState.players.findIndex(p => p.id === playerId);
+            gameState.chains[myChainIndex].items.push({
+                type: 'image',
+                content: imageData,
+                author: playerName
+            });
+
+            if (roomRef) {
+                roomRef.child('chains').child(myChainIndex).update({
+                    items: gameState.chains[myChainIndex].items
+                });
+                
+                // Öka räknare
+                const newCount = (gameState.completedDrawings || 0) + 1;
+                roomRef.update({ completedDrawings: newCount });
+                
+                // Kolla om alla är klara
+                if (newCount >= gameState.players.length) {
+                    // Gå till writing phase
+                    setTimeout(() => {
+                        roomRef.update({ 
+                            phase: 'writing',
+                            completedDrawings: 0
+                        });
+                    }, 1000);
+                }
             }
-            
-            showWaiting();
+
+            showWaiting('drawing');
         }
 
-        // ==================== SKRIV-FAS ====================
-        function showWriting() {
-            showScreen('writingScreen');
-            document.getElementById('showDrawing').src = state.game.currentImage;
+        // SKRIVA-FAS
+        function startWritingPhase() {
+            // Hitta bild att beskriva (nästa kedja)
+            const myIndex = gameState.players.findIndex(p => p.id === playerId);
+            const chainToDescribe = gameState.chains[(myIndex + 1) % gameState.chains.length];
+            const imageItem = chainToDescribe.items.find(i => i.type === 'image');
+            
+            if (!imageItem) {
+                showToast('Ingen bild att beskriva!', 'error');
+                return;
+            }
+
+            document.getElementById('showDrawing').src = imageItem.content;
+            document.getElementById('writeTimer').textContent = '45';
             document.getElementById('guessInput').value = '';
-            startTimer(45, 'writeTimer', submitGuess);
+            
+            showScreen('screen-writing');
+            document.getElementById('guessInput').focus();
+            
+            startTimer(45, 'writeTimer', () => {
+                submitGuess();
+            });
         }
 
         function submitGuess() {
             const guess = document.getElementById('guessInput').value.trim();
-            if (!guess) return;
-            
-            state.game.myChain.items.push({ type: 'text', content: guess, author: state.player });
-            showWaiting();
-        }
+            if (!guess) {
+                showToast('Skriv något!', 'error');
+                return;
+            }
 
-        // ==================== VÄNTNING & RESULTAT ====================
-        function showWaiting() {
-            showScreen('waitingScreen');
-            let progress = 0;
-            const interval = setInterval(() => {
-                progress += 25;
-                document.getElementById('waitProgress').style.width = progress + '%';
-                document.getElementById('waitText').textContent = `${Math.min(progress/25, 4)} / 4 klara`;
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    setTimeout(showResults, 500);
-                }
-            }, 1000);
-        }
-
-        function showResults() {
-            showScreen('resultsScreen');
-            const list = document.getElementById('resultsList');
-            list.innerHTML = '';
+            // Lägg till i kedjan
+            const myIndex = gameState.players.findIndex(p => p.id === playerId);
+            const chainToUpdate = gameState.chains[(myIndex + 1) % gameState.chains.length];
             
-            state.game.chains.forEach(chain => {
-                const div = document.createElement('div');
-                div.style.cssText = 'background: #f5f5f5; padding: 20px; margin: 15px 0; border-radius: 10px;';
+            chainToUpdate.items.push({
+                type: 'text',
+                content: guess,
+                author: playerName
+            });
+
+            if (roomRef) {
+                const chainIndex = (myIndex + 1) % gameState.chains.length;
+                roomRef.child('chains').child(chainIndex).update({
+                    items: chainToUpdate.items
+                });
                 
-                let html = `<h3>${chain.owner.name}s kedja:</h3>`;
+                const newCount = (gameState.completedGuesses || 0) + 1;
+                roomRef.update({ completedGuesses: newCount });
+                
+                if (newCount >= gameState.players.length) {
+                    // Nästa runda eller resultat
+                    setTimeout(() => {
+                        const nextRound = (gameState.currentRound || 1) + 1;
+                        if (nextRound > gameState.settings.rounds) {
+                            roomRef.update({ phase: 'results' });
+                        } else {
+                            roomRef.update({ 
+                                phase: 'drawing',
+                                currentRound: nextRound,
+                                completedGuesses: 0
+                            });
+                        }
+                    }, 1000);
+                }
+            }
+
+            showWaiting('writing');
+        }
+
+        // VÄNTA
+        function showWaiting(type) {
+            showScreen('screen-waiting');
+            
+            let progress = 25;
+            const bar = document.getElementById('waitProgress');
+            const text = document.getElementById('waitText');
+            const total = gameState.players.length;
+            
+            // Lyssna på progress
+            const checkProgress = setInterval(() => {
+                const completed = type === 'drawing' 
+                    ? (gameState.completedDrawings || 0) 
+                    : (gameState.completedGuesses || 0);
+                
+                progress = Math.max(25, (completed / total) * 100);
+                bar.style.width = progress + '%';
+                text.textContent = `${completed} / ${total} klara`;
+                
+                if (completed >= total) {
+                    clearInterval(checkProgress);
+                }
+            }, 500);
+        }
+
+        // RESULTAT
+        function showResults() {
+            showScreen('screen-results');
+            
+            const container = document.getElementById('resultsList');
+            container.innerHTML = '';
+            
+            gameState.chains.forEach((chain, index) => {
+                const card = document.createElement('div');
+                card.className = 'chain-card';
+                card.style.animation = `slideUp 0.5s ease ${index * 0.1}s both`;
+                
+                let itemsHtml = '';
                 chain.items.forEach((item, i) => {
+                    if (i > 0) {
+                        itemsHtml += '<div class="chain-arrow">⬇️</div>';
+                    }
+                    
                     if (item.type === 'text') {
-                        html += `<div class="chain-item">✏️ "${item.content}" - ${item.author.name}</div>`;
+                        itemsHtml += `
+                            <div class="chain-item">
+                                <div class="chain-icon">✏️</div>
+                                <div class="chain-content">
+                                    <div class="chain-text">"${item.content}"</div>
+                                    <div class="chain-author">av ${item.author}</div>
+                                </div>
+                            </div>
+                        `;
                     } else {
-                        html += `<div class="chain-item">🎨 <img src="${item.content}" class="chain-drawing"> - ${item.author.name}</div>`;
+                        itemsHtml += `
+                            <div class="chain-item">
+                                <div class="chain-icon">🎨</div>
+                                <div class="chain-content">
+                                    <img src="${item.content}" class="chain-image">
+                                    <div class="chain-author">av ${item.author}</div>
+                                </div>
+                            </div>
+                        `;
                     }
                 });
                 
-                div.innerHTML = html;
-                list.appendChild(div);
+                card.innerHTML = `
+                    <div class="chain-header">
+                        <div class="chain-avatar">${chain.owner.avatar}</div>
+                        <div class="chain-title">
+                            <h3>${chain.owner.name}s kedja</h3>
+                            <p>Se förvandlingen!</p>
+                        </div>
+                    </div>
+                    <div class="chain-body">
+                        ${itemsHtml}
+                    </div>
+                `;
+                
+                container.appendChild(card);
             });
         }
 
         function playAgain() {
-            state.game.round = 0;
-            state.game.phase = 'lobby';
-            if (state.player.isHost) {
-                startGame();
-            } else {
-                showScreen('waitingScreen');
+            if (isHost && roomRef) {
+                // Nya kedjor
+                const chains = gameState.players.map((player, index) => ({
+                    owner: player,
+                    items: [{
+                        type: 'text',
+                        content: PROMPTS[Math.floor(Math.random() * PROMPTS.length)],
+                        author: player.name
+                    }],
+                    currentPlayerIndex: 0
+                }));
+                
+                roomRef.update({
+                    phase: 'drawing',
+                    currentRound: 1,
+                    chains: chains,
+                    completedDrawings: 0,
+                    completedGuesses: 0
+                });
             }
         }
 
         function backToLobby() {
-            showScreen('lobbyScreen');
+            showScreen('screen-lobby');
         }
 
-        // ==================== TIMER ====================
+        // TIMER
         let timerInterval;
         function startTimer(seconds, elementId, callback) {
             clearInterval(timerInterval);
@@ -519,7 +1483,11 @@
             timerInterval = setInterval(() => {
                 time--;
                 el.textContent = time;
-                if (time <= 10) el.classList.add('warning');
+                
+                if (time <= 10) {
+                    el.classList.add('warning');
+                }
+                
                 if (time <= 0) {
                     clearInterval(timerInterval);
                     callback();
@@ -527,12 +1495,32 @@
             }, 1000);
         }
 
-        // ==================== INIT ====================
-        // Ladda sparat namn
-        const saved = localStorage.getItem('garticName');
-        if (saved) document.getElementById('playerName').value = saved;
-        document.getElementById('playerName').addEventListener('change', (e) => {
-            localStorage.setItem('garticName', e.target.value);
+        // Lyssna på phase-ändringar för icke-host
+        if (database) {
+            // Detta körs för att uppdatera UI när host ändrar phase
+            setInterval(() => {
+                if (!roomRef) return;
+                
+                roomRef.child('phase').once('value').then(snap => {
+                    const phase = snap.val();
+                    if (!phase) return;
+                    
+                    if (phase === 'writing' && document.getElementById('screen-waiting').classList.contains('active')) {
+                        startWritingPhase();
+                    } else if (phase === 'results' && !document.getElementById('screen-results').classList.contains('active')) {
+                        showResults();
+                    }
+                });
+            }, 2000);
+        }
+
+        // Förhindra oavsiktlig navigering
+        window.addEventListener('beforeunload', (e) => {
+            if (document.getElementById('screen-drawing').classList.contains('active') ||
+                document.getElementById('screen-writing').classList.contains('active')) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
         });
     </script>
 </body>
