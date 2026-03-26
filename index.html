@@ -931,24 +931,13 @@
             });
         }
 
-       function getPrompt(index) {
-    // Användarens egna prompt eller slumpmässig om ingen finns
-    const customPrompt = localStorage.getItem('customPrompt' + index);
-    if (customPrompt) return customPrompt;
-    
-    const defaultPrompts = [
-        "En katt som dansar balett", "En elefant på rymmen", "En pirat som lagar mat",
-        "En robot som gråter", "En enhörning i rymden", "En dinosaurie som spelar gitarr",
-        "En astronaut som bakar", "Ett spöke på semester", "En drake som yogar",
-        "En hund som surfar", "En groda som är prins", "Ett monster som bakar"
-    ];
-    
-    return defaultPrompts[index % defaultPrompts.length];
-}
-
-function setCustomPrompt(index, prompt) {
-    localStorage.setItem('customPrompt' + index, prompt);
-}
+        function getPrompt(index) {
+            const prompts = [
+                "En katt som dansar balett", "En elefant på rymmen", "En pirat som lagar mat",
+                "En robot som gråter", "En enhörning i rymden", "En dinosaurie som spelar gitarr",
+                "En astronaut som bakar", "Ett spöke på semester", "En drake som yogar",
+                "En hund som surfar", "En groda som är prins", "Ett monster som bakar"
+            ];
             return prompts[index % prompts.length];
         }
 
